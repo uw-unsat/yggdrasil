@@ -5,7 +5,6 @@ from xv6inode import create_fuse_inode
 
 from llfuse cimport *
 from diskimpl cimport Block, Stat
-from xv6inode cimport FuseInode
 from dirinode cimport DirImpl
 
 from libc.stdint cimport uint64_t, int64_t
@@ -18,7 +17,6 @@ from libc.errno cimport ENOENT, ENOTDIR, EISDIR, EACCES, ENOMEM, ENAMETOOLONG, E
 
 
 cdef DirImpl inode_obj = None
-# cdef FuseInode inode_obj = None
 
 
 cdef uint64_t NUM_BLOCKS = 522
