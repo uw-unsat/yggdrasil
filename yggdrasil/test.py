@@ -17,6 +17,8 @@ from z3 import And, Implies, ForAll, BoolRef, Not, Solver, unsat, unknown, Z3Exc
 from diskspec import Machine
 from util import prove, solve
 
+import solver
+
 
 def z3_option(**kwargs):
     def decorator(fn):
@@ -170,7 +172,7 @@ class DiskTest(unittest.TestCase):
         return model
 
     def _solve(self, *args, **keywords):
-        s = Solver()
+        s = solver.Solver()
 
         s.set(**keywords)
 
