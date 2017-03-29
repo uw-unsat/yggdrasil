@@ -21,8 +21,10 @@ cdef class DirImpl:
 
     cdef object _orphans
 
-    cdef object locate_dentry(self, Block block, uint64_t[15] name)
-    cdef uint64_t locate_empty_dentry_slot(self, Block block)
+    cdef object locate_dentry_ino(self, uint64_t ino, uint64_t[15] name)
+    cdef object locate_empty_dentry_slot_ino(self, uint64_t ino)
+    cdef object locate_empty_dentry_slot_err_ino(self, uint64_t ino)
+
     cdef void write_dentry(self, Block block, uint64_t off, uint64_t ino, uint64_t[15] name)
     cdef void clear_dentry(self, Block block, uint64_t off)
 

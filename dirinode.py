@@ -60,6 +60,7 @@ class DirImpl(object):
     IFREEDISK =  4
     ORPHANS =  5
 
+    @cython.locals(inode='IndirectInodeDisk')
     def __init__(self, txndisk, inode, Allocator, Bitmap, DirLookup):
         self._txndisk = txndisk
         self._inode = inode
@@ -68,7 +69,14 @@ class DirImpl(object):
         self._Bitmap = Bitmap
         self._DirLookup = DirLookup
 
-        self._dirlook = DirLookup()
+        PIno = namedtuple('Inode', ['is_mapped', 'mappingi', 'read', 'bmap'])
+
+        self._dirlook = DirLookup(PIno(
+            is_mapped=lambda vbn, inode=inode: inode.is_mapped(vbn),
+            mappingi=lambda vbn, inode=inode: inode.mappingi(vbn),
+            read=lambda bid, inode=inode: inode.read(bid),
+            bmap=lambda bid, inode=inode: inode.bmap(bid),
+        ))
 
         self._ifree = Disk(
             write=lambda bid, data: self._txndisk.write_tx(self.IFREEDISK, bid, data),
@@ -85,22 +93,32 @@ class DirImpl(object):
         self._ibitmap = Bitmap(self._ifree)
         self._orphans = Orphans(orphandisk)
 
-    def locate_dentry(self, block, name):
-        off = self._dirlook.locate_dentry(block, name)
-        valid = And(off % 16 == 0, Extract(31, 0, block[off]) != 0)
+    def locate_dentry_ino(self, ino, name):
+        ioff, off = self._dirlook.locate_dentry_ino(ino, name)
+        assertion(ULT(ioff, 8), "locate_dentry_ino: invalid ioff")
+        bid = self._inode.bmap(Concat32(ino, ioff))
+        block = self._inode.read(bid)
+        valid = And(bid != 0, off % 16 == 0, Extract(31, 0, block[off]) != 0)
         for i in range(15):
             valid = And(valid, block[off + i + 1] == name[i])
-        return off, valid
+        return block, bid, off, valid
 
-    def locate_empty_dentry_slot_err(self, block):
-        off = self._dirlook.locate_empty_slot(block)
-        return off, And(off % 16 == 0, block[off] == 0)
-
-    def locate_empty_dentry_slot(self, block):
-        off = self._dirlook.locate_empty_slot(block)
+    def locate_empty_dentry_slot_ino(self, ino):
+        ioff, off = self._dirlook.locate_empty_slot_ino(ino)
+        assertion(ULT(ioff, 8), "locate_empty_dentry_slot: invalid ioff")
+        bid = self._inode.bmap(Concat32(ino, ioff))
+        block = self._inode.read(bid)
+        assertion(bid != 0, "locate_empty_dentry_slot: invalid bid")
         assertion(off % 16 == 0, "locate_empty_dentry_slot: invalid offset")
         assertion(block[off] == 0, "locate_empty_dentry_slot: slot not empty")
-        return off
+        return block, bid, off
+
+    def locate_empty_dentry_slot_err_ino(self, ino):
+        ioff, off = self._dirlook.locate_empty_slot_ino(ino)
+        assertion(ULT(ioff, 8), "locate_dentry_ino: invalid ioff")
+        bid = self._inode.bmap(Concat32(ino, ioff))
+        block = self._inode.read(bid)
+        return block, bid, off, And(bid != 0, off % 16 == 0, block[off] == 0)
 
     def write_dentry(self, block, off, ino, name):
         block[off] = ino
@@ -208,12 +226,8 @@ class DirImpl(object):
         assertion(self.is_dir(parent), "lookup: parent is not dir")
 
         self._inode.begin_tx()
-        parent_bid = self._inode.bmap(Concat32(parent, BitVecVal(0, 32)))
+        parent_block, _, off, valid = self.locate_dentry_ino(parent, name)
         self._inode.commit_tx()
-
-        parent_block = self._inode.read(parent_bid)
-
-        off, valid = self.locate_dentry(parent_block, name)
 
         return If(valid, Extract(31, 0, parent_block[off]), 0)
 
@@ -223,10 +237,7 @@ class DirImpl(object):
 
         self._inode.begin_tx()
 
-        parent_bid = self._inode.bmap(Concat32(parent, BitVecVal(0, 32)))
-        parent_block = self._inode.read(parent_bid)
-
-        off, valid = self.locate_empty_dentry_slot_err(parent_block)
+        parent_block, parent_bid, off, valid = self.locate_empty_dentry_slot_err_ino(parent)
         if Not(valid):
             self._inode.commit_tx()
             return 0, errno.ENOSPC
@@ -238,8 +249,8 @@ class DirImpl(object):
         self._inode.set_iattr(ino, attr)
 
         attr = self._inode.get_iattr(parent)
-        assertion(Or(attr.bsize == 0, attr.bsize == 1), "mknod: bsize is larger than 1")
-        attr.size = Concat32(BitVecVal(1, 32), BitVecVal(4096, 32))
+        assertion(ULE(attr.bsize, 8), "mknod: bsize is larger than 8")
+        attr.size = Concat32(BitVecVal(8, 32), BitVecVal(4096 * 8, 32))
         assertion(ULT(attr.nlink, attr.nlink + 1), "mknod: nlink overflow")
         attr.nlink += 1
 
@@ -260,14 +271,12 @@ class DirImpl(object):
 
         self._inode.begin_tx()
 
-        parent_bid = self._inode.bmap(Concat32(parent, BitVecVal(0, 32)))
-        parent_block = self._inode.read(parent_bid)
+        parent_block, parent_bid, off, valid = self.locate_dentry_ino(parent, name)
 
-        off, valid = self.locate_dentry(parent_block, name)
         assertion(valid, "unlink: not valid")
 
         attr = self._inode.get_iattr(parent)
-        assertion(UGT(attr.nlink, 2), "unlink: nlink is not greater than 1")
+        assertion(UGE(attr.nlink, 2), "unlink: nlink is not greater than 1: " + str(attr.nlink))
         attr.nlink -= 1
         self._inode.set_iattr(parent, attr)
 
@@ -293,10 +302,7 @@ class DirImpl(object):
         assertion(name[0] != 0, "rmdir: name is null")
 
         self._inode.begin_tx()
-        parent_bid = self._inode.bmap(Concat32(parent, BitVecVal(0, 32)))
-        parent_block = self._inode.read(parent_bid)
-
-        off, valid = self.locate_dentry(parent_block, name)
+        parent_block, parent_bid, off, valid = self.locate_dentry_ino(parent, name)
         if Not(valid):
             self._inode.commit_tx()
             return 0, errno.ENOENT
@@ -316,20 +322,19 @@ class DirImpl(object):
             return BitVecVal(0, 32), errno.ENOTEMPTY
 
         attr = self._inode.get_iattr(parent)
-        assertion(UGT(attr.nlink, 2), "rmdir: nlink is not greater than 1")
+        assertion(UGE(attr.nlink, 2), "rmdir: nlink is not greater than 1: " + str(attr.nlink))
         attr.nlink -= 1
         self._inode.set_iattr(parent, attr)
 
         self.clear_dentry(parent_block, off)
         self._inode.write(parent_bid, parent_block)
 
-        self._inode.bunmap(Concat32(ino, BitVecVal(0, 32)))
         attr = self._inode.get_iattr(ino)
-        assertion(ULE(attr.bsize, 1), "rmdir: bsize larger than 1")
-        attr.nlink = 0
-        attr.size = 0
+        attr.nlink = 1
         self._inode.set_iattr(ino, attr)
-        self._ibitmap.unset_bit(ino)
+
+        # append the inode to the orphan list
+        self._orphans.append(Extend(ino, 64))
 
         self._inode.commit_tx()
 
@@ -356,39 +361,34 @@ class DirImpl(object):
 
         self._inode.begin_tx()
 
-        oparent_bid = self._inode.bmap(Concat32(oparent, BitVecVal(0, 32)))
-        nparent_bid = self._inode.bmap(Concat32(nparent, BitVecVal(0, 32)))
-
         attr = self._inode.get_iattr(oparent)
-        assertion(UGT(attr.nlink, 2), "unlink: nlink is not greater than 1")
+        assertion(UGE(attr.nlink, 2), "rename: nlink is not greater than 1: " + str(attr.nlink))
         attr.nlink -= 1
         self._inode.set_iattr(oparent, attr)
 
         attr = self._inode.get_iattr(nparent)
-        assertion(Or(attr.bsize == 0, attr.bsize == 1), "rename: bsize larger than 1")
-        attr.size = Concat32(BitVecVal(1, 32), BitVecVal(4096, 32))
+        assertion(ULE(attr.bsize, 8), "rename: bsize is larger than 8")
+        attr.size = Concat32(BitVecVal(8, 32), BitVecVal(4096 * 8, 32))
         assertion(ULT(attr.nlink, attr.nlink + 1), "rename: nlink overflow")
         attr.nlink += 1
         self._inode.set_iattr(nparent, attr)
 
         # Find target and wipe from parent block
-        oparent_block = self._inode.read(oparent_bid)
-        ooff, ovalid  = self.locate_dentry(oparent_block, oname)
+        oparent_block, oparent_bid, ooff, ovalid  = self.locate_dentry_ino(oparent, oname)
         assertion(ovalid, "rename: ooff is not valid")
         ino = oparent_block[ooff]
         self.clear_dentry(oparent_block, ooff)
         self._inode.write(oparent_bid, oparent_block)
 
         # Check if target exists
-        nparent_block = self._inode.read(nparent_bid)
-        noff, nvalid = self.locate_dentry(nparent_block, nname)
+        nparent_block, nparent_bid, noff, nvalid = self.locate_dentry_ino(nparent, nname)
 
         if nvalid:
             # append the dst inode to the orphan list
             self._orphans.append(nparent_block[noff])
             self.clear_dentry(nparent_block, noff)
 
-        noff = self.locate_empty_dentry_slot(nparent_block)
+        nparent_block, nparent_bid, noff = self.locate_empty_dentry_slot_ino(nparent)
         self.write_dentry(nparent_block, noff, ino, nname)
 
         self._inode.write(nparent_bid, nparent_block)

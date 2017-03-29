@@ -195,7 +195,11 @@ cdef class Allocator:
                 return a
         return 0
 
+
 cdef class DentryLookup:
+    def __init__(self, inode):
+        self._inode = inode
+
     cdef int locate_dentry(self, Block block, uint64_t[15] name) nogil:
         cdef int i
         cdef uint64_t ino, n, v
@@ -219,3 +223,31 @@ cdef class DentryLookup:
             if ino == 0:
                 return i
         return -1
+
+    cdef tuple locate_dentry_ino(self, uint64_t ino, uint64_t[15] name):
+        cdef Block block
+        cdef uint64_t i, bid
+        cdef int res
+
+        for i in range(8):
+            if not self._inode.is_mapped(Concat32(ino, i)):
+                continue
+            bid = self._inode.mappingi(Concat32(ino, i))
+            block = self._inode.read(bid)
+            res = self.locate_dentry(block, name)
+            if res >= 0:
+                return i, res
+        return 0, -1
+
+    cdef tuple locate_empty_slot_ino(self, uint64_t ino):
+        cdef Block block
+        cdef uint64_t i, bid
+        cdef int res
+
+        for i in range(8):
+            bid = self._inode.bmap(Concat32(ino, i))
+            block = self._inode.read(bid)
+            res = self.locate_empty_slot(block)
+            if res >= 0:
+                return i, res
+        return 0, -1

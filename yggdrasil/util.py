@@ -13,6 +13,11 @@ if Z3_LIBRARY_PATH:
 sys.setrecursionlimit(9999)
 
 
+def nop(*args, **kwargs):
+    pass
+setattr(z3.AstRef, '__del__', nop)
+
+
 # block number (64 bits)
 SizeSort  = BitVecSort(64)
 

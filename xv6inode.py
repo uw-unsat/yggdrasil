@@ -326,21 +326,22 @@ def mkfs(fdisk):
 
     attr = inode.get_iattr(1)
 
-    # Initialize the root directory
-    attr.mode = 0755 | S_IFDIR
-    attr.mtime = int(time.time())
-    attr.nlink = 2
+    if attr.nlink == 0:
+        # Initialize the root directory
+        attr.mode = 0755 | S_IFDIR
+        attr.mtime = int(time.time())
+        attr.nlink = 2
 
-    inode.set_iattr(1, attr)
+        inode.set_iattr(1, attr)
 
-    # Reserve datablock 0
-    inode._idisk._bitmap.set_bit(0)
+        # Reserve datablock 0
+        inode._idisk._bitmap.set_bit(0)
 
-    # Reserve inodes 0 and 1
-    fdisk._ibitmap.set_bit(0)
-    fdisk._ibitmap.set_bit(1)
+        # Reserve inodes 0 and 1
+        fdisk._ibitmap.set_bit(0)
+        fdisk._ibitmap.set_bit(1)
 
-    fdisk._txndisk.commit_tx(True)
+        fdisk._txndisk.commit_tx(True)
 
 
 _curr = 0

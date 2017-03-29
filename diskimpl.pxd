@@ -1,7 +1,6 @@
 from libc.stdint cimport uint64_t
 from libc.string cimport memcpy
 
-
 # Extract returns the same size type..
 cpdef inline uint64_t Extract(int hi, int lo, uint64_t val):
     return val >> lo & ((<uint64_t>1 << (hi - lo + 1)) - <uint64_t>1)
@@ -101,7 +100,6 @@ cdef class PartitionAsyncDisk:
     cpdef void flush(self)
 
 
-
 cdef class Allocator:
     cdef readfn
     cdef uint64_t start
@@ -110,6 +108,12 @@ cdef class Allocator:
     cdef uint64_t _alloc(self, uint64_t i, Block block) nogil
     cpdef uint64_t alloc(self)
 
+
 cdef class DentryLookup:
+    cdef object _inode
+
     cdef int locate_dentry(self, Block block, uint64_t[15] name) nogil
     cdef int locate_empty_slot(self, Block block) nogil
+
+    cdef tuple locate_dentry_ino(self, uint64_t ino, uint64_t[15] name)
+    cdef tuple locate_empty_slot_ino(self, uint64_t ino)

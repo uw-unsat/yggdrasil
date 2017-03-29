@@ -18,11 +18,20 @@ def FreshName(name):
 
 
 class DirLook(object):
+    def __init__(self, inode):
+        pass
+
     def locate_empty_slot(self, block):
         return FreshBitVec('off', 9)
 
     def locate_dentry(self, block, name):
         return FreshBitVec('off', 9)
+
+    def locate_empty_slot_ino(self, ino):
+        return FreshBitVec('ioff', 32), FreshBitVec('off', 9)
+
+    def locate_dentry_ino(self, ino, name):
+        return FreshBitVec('ioff', 32), FreshBitVec('off', 9)
 
 
 class Attributes(object):
@@ -125,21 +134,8 @@ class DirSpec(object):
     ##
 
     def read(self, ino, blocknum, off):
-        # Calculate byte offset into file
-
-        # bnum = ZeroExt(64 - blocknum.size(), blocknum)
-
-        # Get file size
-        # fsize = self._attrs.bsize(ino)
-
-        # read file value
         res = self._datafn(ino, blocknum, off)
-
         return res
-
-        # If within bounds, then read byte, else return 0
-        # res = If(ULT(bnum, fsize), res, BitVecVal(0, 64))
-        # return res
 
     # Truncate a file down to block `bnum`.
     # truncate(ino, 0) will wipe the entire file.
@@ -149,11 +145,6 @@ class DirSpec(object):
         assertion(self.is_regular(ino))
 
         on = self._mach.create_on([])
-
-        # _fn = self._datafn._fn
-        # fn = lambda i, b, o: If(
-        #         And(on, ino == i, ULE(b, bnum)), BitVecVal(0, 64), _fn(i, b, o))
-        # self._datafn._fn = fn
 
         self._attrs.set_fsize(ino, size, on)
 
@@ -196,8 +187,8 @@ class DirSpec(object):
 
         assertion(ULT(self._attrs.nlink(nparent), self._attrs.nlink(nparent) + 1))
         self._attrs.set_nlink(nparent, self._attrs.nlink(nparent) + 1, guard=on)
-        self._attrs.set_bsize(nparent, 1, guard=on)
-        self._attrs.set_fsize(nparent, 4096, guard=on)
+        self._attrs.set_bsize(nparent, 8, guard=on)
+        self._attrs.set_fsize(nparent, 4096 * 8, guard=on)
 
         assertion(ULT(self._attrs.nlink(nparent) - 1, self._attrs.nlink(nparent)))
         self._attrs.set_nlink(oparent, self._attrs.nlink(oparent) - 1, guard=on)
@@ -225,8 +216,8 @@ class DirSpec(object):
 
         # Set attribute for parent directory
         self._attrs.set_nlink(parent, self._attrs.nlink(parent) + 1, guard=on)
-        self._attrs.set_bsize(parent, 1, guard=on)
-        self._attrs.set_fsize(parent, 4096, guard=on)
+        self._attrs.set_bsize(parent, 8, guard=on)
+        self._attrs.set_fsize(parent, 4096 * 8, guard=on)
 
         # Set attributes for new inode
         self._attrs.set_bsize(ino, 0, guard=on)
@@ -300,10 +291,7 @@ class DirSpec(object):
 
         self._attrs.set_nlink(parent, self._attrs.nlink(parent) - 1, guard=on)
 
-        self._attrs.set_bsize(ino, 0, guard=on)
-        self._attrs.set_fsize(ino, 0, guard=on)
-        self._attrs.set_nlink(ino, 0, guard=on)
-        self._ifreefn = self._ifreefn.update(ino, BoolVal(True), guard=on)
+        self._attrs.set_nlink(ino, 1, guard=on)
     
         return ino, BitVecVal(0, 32)
 

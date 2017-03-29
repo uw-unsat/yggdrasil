@@ -178,9 +178,6 @@ class DiskTest(unittest.TestCase):
 
         s.add(*args)
 
-        # print keywords
-        # print s.to_smt2()
-
         if keywords.get('show', False):
             print(s)
 

@@ -172,7 +172,7 @@ cdef void ll_readdir(fuse_req_t req, fuse_ino_t ino,
 
     cdef dirbuf b
     cdef Block block
-    cdef uint64_t i, boff, fileino
+    cdef uint64_t i, ioff, boff, fileino
     cdef uint64_t[16] name
     cdef bint mapped
     memset(&name, 0, sizeof(uint64_t) * 16)
@@ -188,17 +188,18 @@ cdef void ll_readdir(fuse_req_t req, fuse_ino_t ino,
         dirbuf_add(req, &b, ".", ino)
         dirbuf_add(req, &b, "..", ino)
 
-        block = inode_obj.read(ino, boff)
+        for ioff in range(8):
+            block = inode_obj.read(ino, ioff)
 
-        for i in range(0, 512, 16):
-            fileino = block.get(i)
-            if fileino != 0:
-                memcpy(&name, (<char*>block.buf) + (i + 1) * 8, MAX_NAME_LENGTH)
+            for i in range(0, 512, 16):
+                fileino = block.get(i)
+                if fileino != 0:
+                    memcpy(&name, (<char*>block.buf) + (i + 1) * 8, MAX_NAME_LENGTH)
 
-                dirbuf_add(req, &b, <char*>&name, fileino)
+                    dirbuf_add(req, &b, <char*>&name, fileino)
 
-                if b.size > size + off:
-                    break
+                    if b.size > size + off:
+                        break
 
         reply_buf_limited(req, b.p, b.size, off, size)
         free(b.p)
