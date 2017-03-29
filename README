@@ -8,7 +8,7 @@ We have tested it using the following setup:
 
 - Cython 0.25.2
 - Python 2
-- Z3 4.4.1
+- Z3 4.4.2 (git commit e3f0aff318b5873cfe858191b8e73ed716405b59)
 - Linux (with FUSE)
 
 Install these packages before proceeding.  Other platforms or
