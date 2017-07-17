@@ -229,7 +229,9 @@ cdef class DentryLookup:
         cdef uint64_t i, bid
         cdef int res
 
-        for i in range(8):
+        for i in range(522):
+            if i == 10:
+                continue
             if not self._inode.is_mapped(Concat32(ino, i)):
                 continue
             bid = self._inode.mappingi(Concat32(ino, i))
@@ -244,7 +246,9 @@ cdef class DentryLookup:
         cdef uint64_t i, bid
         cdef int res
 
-        for i in range(8):
+        for i in range(522):
+            if i == 10:
+                continue
             bid = self._inode.bmap(Concat32(ino, i))
             block = self._inode.read(bid)
             res = self.locate_empty_slot(block)

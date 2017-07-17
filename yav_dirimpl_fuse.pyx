@@ -4,7 +4,7 @@ import traceback
 from xv6inode import create_fuse_inode
 
 from llfuse cimport *
-from diskimpl cimport Block, Stat
+from diskimpl cimport Block, Stat, Concat32
 from dirinode cimport DirImpl
 
 from libc.stdint cimport uint64_t, int64_t
@@ -188,7 +188,12 @@ cdef void ll_readdir(fuse_req_t req, fuse_ino_t ino,
         dirbuf_add(req, &b, ".", ino)
         dirbuf_add(req, &b, "..", ino)
 
-        for ioff in range(8):
+        for ioff in range(522):
+            if ioff == 10:
+                continue
+            is_mapped = inode_obj._inode.is_mapped(Concat32(ino, ioff))
+            if not is_mapped:
+                break
             block = inode_obj.read(ino, ioff)
 
             for i in range(0, 512, 16):

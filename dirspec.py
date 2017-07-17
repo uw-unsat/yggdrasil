@@ -187,8 +187,8 @@ class DirSpec(object):
 
         assertion(ULT(self._attrs.nlink(nparent), self._attrs.nlink(nparent) + 1))
         self._attrs.set_nlink(nparent, self._attrs.nlink(nparent) + 1, guard=on)
-        self._attrs.set_bsize(nparent, 8, guard=on)
-        self._attrs.set_fsize(nparent, 4096 * 8, guard=on)
+        self._attrs.set_bsize(nparent, 522, guard=on)
+        self._attrs.set_fsize(nparent, 4096 * 522, guard=on)
 
         assertion(ULT(self._attrs.nlink(nparent) - 1, self._attrs.nlink(nparent)))
         self._attrs.set_nlink(oparent, self._attrs.nlink(oparent) - 1, guard=on)
@@ -216,8 +216,8 @@ class DirSpec(object):
 
         # Set attribute for parent directory
         self._attrs.set_nlink(parent, self._attrs.nlink(parent) + 1, guard=on)
-        self._attrs.set_bsize(parent, 8, guard=on)
-        self._attrs.set_fsize(parent, 4096 * 8, guard=on)
+        self._attrs.set_bsize(parent, 522, guard=on)
+        self._attrs.set_fsize(parent, 4096 * 522, guard=on)
 
         # Set attributes for new inode
         self._attrs.set_bsize(ino, 0, guard=on)
@@ -277,7 +277,7 @@ class DirSpec(object):
             return 0, errno.ENOTDIR
 
         on = self._mach.create_on([])
-        
+
         ino = self._dirfn(parent, name[0])
         assertion(self.is_dir(ino))
 
@@ -292,7 +292,7 @@ class DirSpec(object):
         self._attrs.set_nlink(parent, self._attrs.nlink(parent) - 1, guard=on)
 
         self._attrs.set_nlink(ino, 1, guard=on)
-    
+
         return ino, BitVecVal(0, 32)
 
     def crash(self, mach):

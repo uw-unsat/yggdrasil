@@ -95,7 +95,8 @@ class DirImpl(object):
 
     def locate_dentry_ino(self, ino, name):
         ioff, off = self._dirlook.locate_dentry_ino(ino, name)
-        assertion(ULT(ioff, 8), "locate_dentry_ino: invalid ioff")
+        assertion(ULT(ioff, 522), "locate_dentry_ino: invalid ioff")
+        assertion(ioff != 10, "locate_dentry_ino: invalid ioff")
         bid = self._inode.bmap(Concat32(ino, ioff))
         block = self._inode.read(bid)
         valid = And(bid != 0, off % 16 == 0, Extract(31, 0, block[off]) != 0)
@@ -105,7 +106,8 @@ class DirImpl(object):
 
     def locate_empty_dentry_slot_ino(self, ino):
         ioff, off = self._dirlook.locate_empty_slot_ino(ino)
-        assertion(ULT(ioff, 8), "locate_empty_dentry_slot: invalid ioff")
+        assertion(ULT(ioff, 522), "locate_empty_dentry_slot: invalid ioff")
+        assertion(ioff != 10, "locate_empty_dentry_slot: invalid ioff")
         bid = self._inode.bmap(Concat32(ino, ioff))
         block = self._inode.read(bid)
         assertion(bid != 0, "locate_empty_dentry_slot: invalid bid")
@@ -115,7 +117,8 @@ class DirImpl(object):
 
     def locate_empty_dentry_slot_err_ino(self, ino):
         ioff, off = self._dirlook.locate_empty_slot_ino(ino)
-        assertion(ULT(ioff, 8), "locate_dentry_ino: invalid ioff")
+        assertion(ULT(ioff, 522), "locate_dentry_ino: invalid ioff")
+        assertion(ioff != 10, "locate_dentry_ino: invalid ioff")
         bid = self._inode.bmap(Concat32(ino, ioff))
         block = self._inode.read(bid)
         return block, bid, off, And(bid != 0, off % 16 == 0, block[off] == 0)
@@ -249,8 +252,8 @@ class DirImpl(object):
         self._inode.set_iattr(ino, attr)
 
         attr = self._inode.get_iattr(parent)
-        assertion(ULE(attr.bsize, 8), "mknod: bsize is larger than 8")
-        attr.size = Concat32(BitVecVal(8, 32), BitVecVal(4096 * 8, 32))
+        assertion(ULE(attr.bsize, 522), "mknod: bsize is larger than 522")
+        attr.size = Concat32(BitVecVal(522, 32), BitVecVal(4096 * 522, 32))
         assertion(ULT(attr.nlink, attr.nlink + 1), "mknod: nlink overflow")
         attr.nlink += 1
 
@@ -367,8 +370,8 @@ class DirImpl(object):
         self._inode.set_iattr(oparent, attr)
 
         attr = self._inode.get_iattr(nparent)
-        assertion(ULE(attr.bsize, 8), "rename: bsize is larger than 8")
-        attr.size = Concat32(BitVecVal(8, 32), BitVecVal(4096 * 8, 32))
+        assertion(ULE(attr.bsize, 522), "rename: bsize is larger than 522")
+        attr.size = Concat32(BitVecVal(522, 32), BitVecVal(4096 * 522, 32))
         assertion(ULT(attr.nlink, attr.nlink + 1), "rename: nlink overflow")
         attr.nlink += 1
         self._inode.set_iattr(nparent, attr)
