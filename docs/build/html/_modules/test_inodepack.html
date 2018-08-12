@@ -1,0 +1,148 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>test_inodepack &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for test_inodepack</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">z3</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">disk</span>
+<span class="kn">from</span> <span class="nn">inodepack</span> <span class="k">import</span> <span class="n">InodePackDisk</span>
+
+<span class="kn">from</span> <span class="nn">yggdrasil.ufarray</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.util</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.diskspec</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil</span> <span class="k">import</span> <span class="n">test</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.test</span> <span class="k">import</span> <span class="o">*</span>
+
+
+<div class="viewcode-block" id="FreshAttr"><a class="viewcode-back" href="../test_inodepack.html#test_inodepack.FreshAttr">[docs]</a><span class="k">def</span> <span class="nf">FreshAttr</span><span class="p">():</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bsize&#39;</span><span class="p">)</span>
+    <span class="n">mtime</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;mtime&#39;</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
+    <span class="n">nlink</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;nlink&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Stat</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">nlink</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InodePackDiskRefinement"><a class="viewcode-back" href="../test_inodepack.html#test_inodepack.InodePackDiskRefinement">[docs]</a><span class="k">class</span> <span class="nc">InodePackDiskRefinement</span><span class="p">(</span><span class="n">RefinementTest</span><span class="p">):</span>
+<div class="viewcode-block" id="InodePackDiskRefinement.create_spec"><a class="viewcode-back" href="../test_inodepack.html#test_inodepack.InodePackDiskRefinement.create_spec">[docs]</a>    <span class="k">def</span> <span class="nf">create_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">dataarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;dataarray&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">datadisk</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">dataarray</span><span class="p">)</span>
+        <span class="n">metaarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;metaarray&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">metadisk</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">metaarray</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">InodePackSpec</span><span class="p">(</span><span class="n">metadisk</span><span class="p">,</span> <span class="n">datadisk</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodePackDiskRefinement.create_impl"><a class="viewcode-back" href="../test_inodepack.html#test_inodepack.InodePackDiskRefinement.create_impl">[docs]</a>    <span class="k">def</span> <span class="nf">create_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">disk</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">InodePackDisk</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="n">disk</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodePackDiskRefinement.equivalence"><a class="viewcode-back" href="../test_inodepack.html#test_inodepack.InodePackDiskRefinement.equivalence">[docs]</a>    <span class="k">def</span> <span class="nf">equivalence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">ioff</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ioff&#39;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">ino</span><span class="p">,</span> <span class="n">ioff</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="n">ioff</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">And</span><span class="p">(</span>
+                      <span class="n">spec</span><span class="o">.</span><span class="n">get_mapping</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">ioff</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">_get_mapping</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">ioff</span><span class="p">),</span>
+                      <span class="n">spec</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span>
+                      <span class="p">)))</span></div>
+
+<div class="viewcode-block" id="InodePackDiskRefinement.match_set_iattr"><a class="viewcode-back" href="../test_inodepack.html#test_inodepack.InodePackDiskRefinement.match_set_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">match_set_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">i0</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">FreshAttr</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodePackDiskRefinement.match_set_mapping"><a class="viewcode-back" href="../test_inodepack.html#test_inodepack.InodePackDiskRefinement.match_set_mapping">[docs]</a>    <span class="k">def</span> <span class="nf">match_set_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">i0</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">off0</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span>
+        <span class="n">ptr0</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ptr&#39;</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">off0</span><span class="p">,</span> <span class="n">ptr0</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

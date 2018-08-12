@@ -1,0 +1,422 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>test_diskspec &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for test_diskspec</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">z3</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">disk</span>
+
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">from</span> <span class="nn">yggdrasil.util</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.diskspec</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil</span> <span class="k">import</span> <span class="n">test</span>
+
+
+<div class="viewcode-block" id="AsyncDiskTest"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.AsyncDiskTest">[docs]</a><span class="k">class</span> <span class="nc">AsyncDiskTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">DiskTest</span><span class="p">):</span>
+<div class="viewcode-block" id="AsyncDiskTest.setUp"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.AsyncDiskTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AsyncDiskTest.test_prefix"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.AsyncDiskTest.test_prefix">[docs]</a>    <span class="k">def</span> <span class="nf">test_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">)</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">Machine</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">,</span>
+            <span class="n">And</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="n">a</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">!=</span> <span class="n">b</span><span class="p">),</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="o">!=</span> <span class="n">c</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AsyncDiskTest.test_reorder"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.AsyncDiskTest.test_reorder">[docs]</a>    <span class="k">def</span> <span class="nf">test_reorder</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">)</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">Machine</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">,</span>
+                <span class="n">And</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="n">a</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">!=</span> <span class="n">b</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="AsyncDiskTest.test_nocrash"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.AsyncDiskTest.test_nocrash">[docs]</a>    <span class="k">def</span> <span class="nf">test_nocrash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">)</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;block&#39;</span><span class="p">)</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">Machine</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">,</span>
+                <span class="n">And</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="o">==</span> <span class="n">a</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="n">b</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="o">==</span> <span class="n">c</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="AsyncDiskTest.test_write_two"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.AsyncDiskTest.test_write_two">[docs]</a>    <span class="k">def</span> <span class="nf">test_write_two</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">)</span>
+        <span class="n">i0</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">assumption</span> <span class="o">=</span> <span class="n">i0</span> <span class="o">!=</span> <span class="n">i1</span>
+
+        <span class="n">oldv0</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i0</span><span class="p">)</span>
+        <span class="n">oldv1</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i1</span><span class="p">)</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span>
+
+        <span class="n">newv0</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i0</span><span class="p">)</span>
+        <span class="n">newv1</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">newv0</span> <span class="o">==</span> <span class="n">x0</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">newv1</span> <span class="o">==</span> <span class="n">x1</span><span class="p">))</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">Machine</span><span class="p">())</span>
+        <span class="n">anyv0</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i0</span><span class="p">)</span>
+        <span class="n">anyv1</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">And</span><span class="p">(</span>
+            <span class="n">Or</span><span class="p">(</span><span class="n">anyv0</span> <span class="o">==</span> <span class="n">oldv0</span><span class="p">,</span> <span class="n">anyv0</span> <span class="o">==</span> <span class="n">x0</span><span class="p">),</span>
+            <span class="n">Or</span><span class="p">(</span><span class="n">anyv1</span> <span class="o">==</span> <span class="n">oldv1</span><span class="p">,</span> <span class="n">anyv1</span> <span class="o">==</span> <span class="n">x1</span><span class="p">))))</span></div>
+
+<div class="viewcode-block" id="AsyncDiskTest.test_flush"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.AsyncDiskTest.test_flush">[docs]</a>    <span class="k">def</span> <span class="nf">test_flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">)</span>
+        <span class="n">i0</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="n">i1</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+
+        <span class="n">oldv0</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i0</span><span class="p">)</span>
+        <span class="n">oldv1</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i1</span><span class="p">)</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">Machine</span><span class="p">())</span>
+        <span class="n">anyv0</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i0</span><span class="p">)</span>
+        <span class="n">anyv1</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">i1</span><span class="p">)</span>
+
+        <span class="n">assumption</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">i0</span> <span class="o">!=</span> <span class="n">i1</span><span class="p">,</span> <span class="n">x1</span> <span class="o">!=</span> <span class="n">oldv1</span><span class="p">,</span> <span class="n">mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">anyv1</span> <span class="o">==</span> <span class="n">x1</span><span class="p">,</span> <span class="n">anyv0</span> <span class="o">==</span> <span class="n">x0</span><span class="p">)))</span></div></div>
+
+
+<span class="c1"># implement SyncDisk on top of AsyncDisk</span>
+<span class="k">class</span> <span class="nc">FlushingDisk</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disk</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="n">disk</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">SyncDiskTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">DiskTest</span><span class="p">):</span>
+    <span class="c1"># SyncDisk is an AsyncDisk</span>
+    <span class="k">def</span> <span class="nf">test_syncdisk_is_async</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">DiskSort</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">))</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+
+        <span class="n">spec_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">impl_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+
+        <span class="n">ad</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">spec_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+        <span class="n">ad</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">SyncDisk</span><span class="p">(</span><span class="n">impl_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+        <span class="n">sd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">ForAll</span><span class="p">([</span><span class="n">array</span><span class="p">]</span> <span class="o">+</span> <span class="n">impl_mach</span><span class="o">.</span><span class="n">control</span><span class="p">,</span>
+                     <span class="n">Exists</span><span class="p">(</span><span class="n">spec_mach</span><span class="o">.</span><span class="n">control</span><span class="p">,</span>
+                            <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span> <span class="n">sd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">ad</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)))))</span>
+
+    <span class="c1"># AsyncDisk+flush is a SyncDisk</span>
+    <span class="k">def</span> <span class="nf">test_flushingdisk_is_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">DiskSort</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">))</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+
+        <span class="n">spec_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">impl_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">SyncDisk</span><span class="p">(</span><span class="n">spec_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+        <span class="n">sd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="n">fd</span> <span class="o">=</span> <span class="n">FlushingDisk</span><span class="p">(</span><span class="n">AsyncDisk</span><span class="p">(</span><span class="n">impl_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">))</span>
+        <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">ForAll</span><span class="p">([</span><span class="n">array</span><span class="p">]</span> <span class="o">+</span> <span class="n">impl_mach</span><span class="o">.</span><span class="n">control</span><span class="p">,</span>
+                     <span class="n">Exists</span><span class="p">(</span><span class="n">spec_mach</span><span class="o">.</span><span class="n">control</span><span class="p">,</span>
+                            <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span> <span class="n">sd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">fd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)))))</span>
+
+
+<span class="c1"># implement SyncDisk on top of AsyncDisk</span>
+<div class="viewcode-block" id="FlushingDisk"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.FlushingDisk">[docs]</a><span class="k">class</span> <span class="nc">FlushingDisk</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disk</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="n">disk</span>
+
+<div class="viewcode-block" id="FlushingDisk.write"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.FlushingDisk.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="FlushingDisk.flush"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.FlushingDisk.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="FlushingDisk.read"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.FlushingDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FlushingDisk.crash"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.FlushingDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="SyncDiskTest"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.SyncDiskTest">[docs]</a><span class="k">class</span> <span class="nc">SyncDiskTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">DiskTest</span><span class="p">):</span>
+    <span class="c1"># SyncDisk is an AsyncDisk</span>
+<div class="viewcode-block" id="SyncDiskTest.test_syncdisk_is_async"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.SyncDiskTest.test_syncdisk_is_async">[docs]</a>    <span class="k">def</span> <span class="nf">test_syncdisk_is_async</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">)</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+
+        <span class="n">spec_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">impl_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+
+        <span class="n">ad</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">spec_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+        <span class="n">ad</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">SyncDisk</span><span class="p">(</span><span class="n">impl_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+        <span class="n">sd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">ForAll</span><span class="p">(</span><span class="n">spec_mach</span><span class="o">.</span><span class="n">control</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span>
+                            <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span> <span class="n">sd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">ad</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)))))</span></div>
+
+    <span class="c1"># AsyncDisk+flush is a SyncDisk</span>
+<div class="viewcode-block" id="SyncDiskTest.test_flushingdisk_is_sync"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.SyncDiskTest.test_flushingdisk_is_sync">[docs]</a>    <span class="k">def</span> <span class="nf">test_flushingdisk_is_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">)</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">)</span>
+
+        <span class="n">spec_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">impl_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+
+        <span class="n">sd</span> <span class="o">=</span> <span class="n">SyncDisk</span><span class="p">(</span><span class="n">spec_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+        <span class="n">sd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="n">fd</span> <span class="o">=</span> <span class="n">FlushingDisk</span><span class="p">(</span><span class="n">AsyncDisk</span><span class="p">(</span><span class="n">impl_mach</span><span class="p">,</span> <span class="n">array</span><span class="p">))</span>
+        <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">ForAll</span><span class="p">(</span><span class="n">spec_mach</span><span class="o">.</span><span class="n">control</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span>
+                   <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span> <span class="n">sd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">fd</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)))))</span></div></div>
+
+
+<div class="viewcode-block" id="VirtualAsyncDiskTest"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.VirtualAsyncDiskTest">[docs]</a><span class="k">class</span> <span class="nc">VirtualAsyncDiskTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">RefinementTest</span><span class="p">):</span>
+<div class="viewcode-block" id="VirtualAsyncDiskTest.create_spec"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.VirtualAsyncDiskTest.create_spec">[docs]</a>    <span class="k">def</span> <span class="nf">create_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span></div>
+       
+<div class="viewcode-block" id="VirtualAsyncDiskTest.create_impl"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.VirtualAsyncDiskTest.create_impl">[docs]</a>    <span class="k">def</span> <span class="nf">create_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">)</span>
+        <span class="n">mapped</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;mapped&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">VirtualAsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">mapped</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VirtualAsyncDiskTest.equivalence"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.VirtualAsyncDiskTest.equivalence">[docs]</a>    <span class="k">def</span> <span class="nf">equivalence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">vbn</span> <span class="o">=</span> <span class="n">Const</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span> <span class="n">spec</span><span class="o">.</span><span class="n">domain</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">vbn</span><span class="p">],</span>
+                <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">),</span>
+                    <span class="n">impl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span> <span class="o">==</span> <span class="n">spec</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vbn</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="VirtualAsyncDiskTest.match_write"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.VirtualAsyncDiskTest.match_write">[docs]</a>    <span class="k">def</span> <span class="nf">match_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">impl</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">i0</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="InodeSpecTest"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.InodeSpecTest">[docs]</a><span class="k">class</span> <span class="nc">InodeSpecTest</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">DiskTest</span><span class="p">):</span>
+<div class="viewcode-block" id="InodeSpecTest.setUp"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.InodeSpecTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">disk</span><span class="o">.</span><span class="n">native</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">disk</span><span class="o">.</span><span class="n">assertion</span><span class="o">.</span><span class="n">assertions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;array&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attr_array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;attrs&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;mapped&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeSpecTest.test_compare_to_async"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.InodeSpecTest.test_compare_to_async">[docs]</a>    <span class="k">def</span> <span class="nf">test_compare_to_async</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d1_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">d1_mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">)</span>
+
+        <span class="n">d2_mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="n">InodeSpec</span><span class="p">(</span><span class="n">d2_mach</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">])</span>
+
+        <span class="n">vbn</span> <span class="o">=</span> <span class="n">Const</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span> <span class="n">d1</span><span class="o">.</span><span class="n">domain</span><span class="p">())</span>
+
+        <span class="n">i0</span> <span class="o">=</span> <span class="n">Const</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span> <span class="n">d1</span><span class="o">.</span><span class="n">domain</span><span class="p">())</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">vbn</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">),</span> <span class="n">d1</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span> <span class="o">==</span> <span class="n">d2</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vbn</span><span class="p">)))</span>
+
+        <span class="n">d1</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+        <span class="n">d2</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+        <span class="n">d2</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">i0</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+        <span class="n">d2</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span>
+
+        <span class="n">d1</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">Machine</span><span class="p">())</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="n">d2</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">Machine</span><span class="p">())</span>
+
+        <span class="n">assumption</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">d1_mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">,</span> <span class="n">d2_mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">)</span>
+
+        <span class="n">post</span> <span class="o">=</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">vbn</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">),</span> <span class="n">d1</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span> <span class="o">==</span> <span class="n">d2</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vbn</span><span class="p">)))</span>
+
+        <span class="n">C1</span> <span class="o">=</span> <span class="n">d1_mach</span><span class="o">.</span><span class="n">control</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">ForAll</span><span class="p">(</span><span class="n">C1</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span>
+                <span class="n">Implies</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">)))))</span></div>
+
+<div class="viewcode-block" id="InodeSpecTest.test_bmap"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.InodeSpecTest.test_bmap">[docs]</a>    <span class="k">def</span> <span class="nf">test_bmap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enable_symbolic_execution</span><span class="p">()</span>
+
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="n">InodeSpec</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">])</span>
+
+        <span class="n">vbn</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;vbn&#39;</span><span class="p">)</span>
+
+        <span class="n">mapped</span> <span class="o">=</span> <span class="n">d2</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+
+        <span class="n">d2</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+        <span class="n">d2</span><span class="o">.</span><span class="n">bmap</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+        <span class="n">d2</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="n">disk</span><span class="o">.</span><span class="n">assertion</span><span class="o">.</span><span class="n">assertions</span><span class="p">),</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">mapped</span><span class="p">),</span> <span class="n">d2</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">))))</span></div>
+
+<div class="viewcode-block" id="InodeSpecTest.test_bunmap"><a class="viewcode-back" href="../test_diskspec.html#test_diskspec.InodeSpecTest.test_bunmap">[docs]</a>    <span class="k">def</span> <span class="nf">test_bunmap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d2</span> <span class="o">=</span> <span class="n">InodeSpec</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attr_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">])</span>
+
+        <span class="n">vbn</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;vbn&#39;</span><span class="p">)</span>
+
+        <span class="n">mapped</span> <span class="o">=</span> <span class="n">d2</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+
+        <span class="n">d2</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+        <span class="n">d2</span><span class="o">.</span><span class="n">bunmap</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+        <span class="n">d2</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">mapped</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">))))</span></div></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

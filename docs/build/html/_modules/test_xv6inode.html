@@ -1,0 +1,362 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>test_xv6inode &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for test_xv6inode</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">disk</span>
+<span class="kn">from</span> <span class="nn">xv6inode</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">from</span> <span class="nn">yggdrasil.diskspec</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.util</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil</span> <span class="k">import</span> <span class="n">test</span>
+
+
+<div class="viewcode-block" id="FreshAttr"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.FreshAttr">[docs]</a><span class="k">def</span> <span class="nf">FreshAttr</span><span class="p">():</span>
+    <span class="n">bsize</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bsize&#39;</span><span class="p">)</span>
+    <span class="n">mtime</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;mtime&#39;</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">)</span>
+    <span class="n">nlink</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;nlink&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Stat</span><span class="p">(</span><span class="n">bsize</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">nlink</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="attr_eq"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.attr_eq">[docs]</a><span class="k">def</span> <span class="nf">attr_eq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">And</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+               <span class="n">a</span><span class="o">.</span><span class="n">mtime</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">mtime</span><span class="p">,</span>
+               <span class="n">a</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InodeDiskRefinement"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.InodeDiskRefinement">[docs]</a><span class="k">class</span> <span class="nc">InodeDiskRefinement</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">RefinementTest</span><span class="p">):</span>
+<div class="viewcode-block" id="InodeDiskRefinement.create_spec"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.InodeDiskRefinement.create_spec">[docs]</a>    <span class="k">def</span> <span class="nf">create_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">mappedarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;mappedarray&#39;</span><span class="p">)</span>
+        <span class="n">attr_array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;spec_attr&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">diskarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;diskarray&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">InodeSpec</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="p">[</span><span class="n">mappedarray</span><span class="p">,</span> <span class="n">attr_array</span><span class="p">,</span> <span class="n">diskarray</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="InodeDiskRefinement.create_impl"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.InodeDiskRefinement.create_impl">[docs]</a>    <span class="k">def</span> <span class="nf">create_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">freemaparray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;freemaparray&#39;</span><span class="p">)</span>
+        <span class="n">inodemetaarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;inodemetaarray&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">inodedataarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;inodedataarray&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">diskarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;diskarray&#39;</span><span class="p">)</span>
+        <span class="n">txndisk</span> <span class="o">=</span> <span class="n">MultiTxnDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="p">[</span><span class="n">freemaparray</span><span class="p">,</span> <span class="n">inodemetaarray</span><span class="p">,</span> <span class="n">inodedataarray</span><span class="p">,</span> <span class="n">diskarray</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">InodeDisk</span><span class="p">(</span><span class="n">txndisk</span><span class="p">,</span> <span class="n">Allocator64</span><span class="p">,</span> <span class="n">BitmapSpec</span><span class="p">,</span> <span class="n">InodePackSpec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDiskRefinement.pre_post"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.InodeDiskRefinement.pre_post">[docs]</a>    <span class="k">def</span> <span class="nf">pre_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">fnargs</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">pre_reverse_map</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;reverse_map&#39;</span><span class="p">),</span> <span class="n">SizeSort</span><span class="p">,</span> <span class="n">SizeSort</span><span class="p">)</span>
+
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">),</span> <span class="mi">64</span><span class="p">)</span>
+
+        <span class="n">ino1</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">off1</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span>
+                <span class="n">And</span><span class="p">(</span>
+                    <span class="n">Or</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">Exists</span><span class="p">([</span><span class="n">ino1</span><span class="p">,</span> <span class="n">off1</span><span class="p">],</span> <span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">Concat</span><span class="p">(</span><span class="n">ino1</span><span class="p">,</span> <span class="n">off1</span><span class="p">))</span> <span class="o">==</span> <span class="n">bid</span><span class="p">)),</span>
+
+                    <span class="c1"># mappings should be the same</span>
+                    <span class="n">spec</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+
+                    <span class="c1"># Contents of mapped blocks should be the same</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+                        <span class="n">impl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">spec</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))),</span>
+
+                    <span class="n">attr_eq</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">Extract</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">bid</span><span class="p">)),</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">Extract</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">bid</span><span class="p">))),</span>
+
+                    <span class="c1"># Mapping should be injective</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+                        <span class="n">pre_reverse_map</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">bid</span><span class="p">),</span>
+
+                    <span class="c1"># Mapped blocks should be allocated</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">Not</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))))))</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">ULT</span><span class="p">(</span><span class="n">fnargs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span><span class="p">))</span>
+
+        <span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">lbn</span><span class="p">))</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">pre</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">lbn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">post_reverse_map</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">If</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pre_reverse_map</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">post_reverse_map</span> <span class="o">=</span> <span class="n">pre_reverse_map</span>
+
+        <span class="n">post</span> <span class="o">=</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span>
+                <span class="n">And</span><span class="p">(</span>
+                    <span class="n">Or</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">Exists</span><span class="p">([</span><span class="n">ino1</span><span class="p">,</span> <span class="n">off1</span><span class="p">],</span> <span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">Concat</span><span class="p">(</span><span class="n">ino1</span><span class="p">,</span> <span class="n">off1</span><span class="p">))</span> <span class="o">==</span> <span class="n">bid</span><span class="p">)),</span>
+
+                    <span class="c1"># mappings should be the same</span>
+                    <span class="n">spec</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+
+                    <span class="c1"># Contents of mapped blocks should be the same</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+                        <span class="n">impl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">spec</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))),</span>
+
+                    <span class="n">attr_eq</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">Extract</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">bid</span><span class="p">)),</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">Extract</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">bid</span><span class="p">))),</span>
+
+                    <span class="c1"># Mapping should be injective</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+                        <span class="n">post_reverse_map</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">bid</span><span class="p">),</span>
+
+                    <span class="c1"># Mapped blocks should be allocated</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">Not</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))))))</span>
+
+        <span class="k">yield</span> <span class="n">post</span></div>
+
+<div class="viewcode-block" id="InodeDiskRefinement.match_set_iattr"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.InodeDiskRefinement.match_set_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">match_set_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">FreshAttr</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_create_bid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">),</span> <span class="mi">64</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">bid</span><span class="p">,)</span>
+
+    <span class="n">match_bunmap</span> <span class="o">=</span> <span class="n">_create_bid</span>
+    <span class="n">match_bmap</span> <span class="o">=</span> <span class="n">_create_bid</span>
+
+    <span class="c1"># Some regular tests below</span>
+
+<div class="viewcode-block" id="InodeDiskRefinement.test_bmap"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.InodeDiskRefinement.test_bmap">[docs]</a>    <span class="k">def</span> <span class="nf">test_bmap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">impl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_impl</span><span class="p">(</span><span class="n">mach</span><span class="p">)</span>
+
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">vbn</span> <span class="o">=</span> <span class="n">Concat</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">)</span>
+
+        <span class="n">mapped</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">Not</span><span class="p">(</span><span class="n">mapped</span><span class="p">)</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span><span class="p">))</span>
+
+        <span class="n">impl</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+        <span class="n">impl</span><span class="o">.</span><span class="n">bmap</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+        <span class="n">impl</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span>
+
+        <span class="n">post</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="o">*</span><span class="n">disk</span><span class="o">.</span><span class="n">assertion</span><span class="o">.</span><span class="n">assertions</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="InodeDiskRefinement.test_bunmap"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.InodeDiskRefinement.test_bunmap">[docs]</a>    <span class="k">def</span> <span class="nf">test_bunmap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+
+        <span class="n">impl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_impl</span><span class="p">(</span><span class="n">mach</span><span class="p">)</span>
+
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">vbn</span> <span class="o">=</span> <span class="n">Concat</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">)</span>
+
+        <span class="n">mapped</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">mapped</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span><span class="p">))</span>
+
+        <span class="n">impl</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+        <span class="n">impl</span><span class="o">.</span><span class="n">bunmap</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+        <span class="n">impl</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span>
+
+        <span class="n">post</span> <span class="o">=</span> <span class="n">Not</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">))</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="o">*</span><span class="n">disk</span><span class="o">.</span><span class="n">assertion</span><span class="o">.</span><span class="n">assertions</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="IndirectInodeDiskRefinement"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.IndirectInodeDiskRefinement">[docs]</a><span class="k">class</span> <span class="nc">IndirectInodeDiskRefinement</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">RefinementTest</span><span class="p">):</span>
+<div class="viewcode-block" id="IndirectInodeDiskRefinement.create_spec"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.IndirectInodeDiskRefinement.create_spec">[docs]</a>    <span class="k">def</span> <span class="nf">create_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">mappedarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;mappedarray&#39;</span><span class="p">)</span>
+        <span class="n">attr_array</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;spec_attr&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">diskarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;diskarray&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">InodeSpec</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="p">[</span><span class="n">mappedarray</span><span class="p">,</span> <span class="n">attr_array</span><span class="p">,</span> <span class="n">diskarray</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDiskRefinement.create_impl"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.IndirectInodeDiskRefinement.create_impl">[docs]</a>    <span class="k">def</span> <span class="nf">create_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">freemaparray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;freemaparray&#39;</span><span class="p">)</span>
+        <span class="n">inodemetaarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;inodemetaarray&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">inodedataarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;inodedataarray&#39;</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+        <span class="n">diskarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;diskarray&#39;</span><span class="p">)</span>
+        <span class="n">txndisk</span> <span class="o">=</span> <span class="n">MultiTxnDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="p">[</span><span class="n">freemaparray</span><span class="p">,</span> <span class="n">inodemetaarray</span><span class="p">,</span> <span class="n">inodedataarray</span><span class="p">,</span> <span class="n">diskarray</span><span class="p">])</span>
+        <span class="n">inodedisk</span> <span class="o">=</span> <span class="n">InodeDisk</span><span class="p">(</span><span class="n">txndisk</span><span class="p">,</span> <span class="n">Allocator64</span><span class="p">,</span> <span class="n">BitmapSpec</span><span class="p">,</span> <span class="n">InodePackSpec</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">IndirectInodeDisk</span><span class="p">(</span><span class="n">inodedisk</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDiskRefinement.pre_post"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.IndirectInodeDiskRefinement.pre_post">[docs]</a>    <span class="k">def</span> <span class="nf">pre_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">fnargs</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">pre_reverse_map</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;reverse_map&#39;</span><span class="p">),</span> <span class="n">SizeSort</span><span class="p">,</span> <span class="n">SizeSort</span><span class="p">)</span>
+
+        <span class="c1"># bid = BitVec(fresh_name(&#39;bid&#39;), 64)</span>
+        <span class="c1"># ino = Extract(63, 32, bid)</span>
+        <span class="c1"># off = Extract(31, 0, bid)</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">Concat</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">)</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">],</span>
+                <span class="n">And</span><span class="p">(</span>
+                    <span class="c1"># Mapped blocks should be allocated</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">Not</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">)))),</span>
+                    <span class="c1"># Mapping should be injective</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">pre_reverse_map</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">bid</span><span class="p">),</span>
+
+                    <span class="n">attr_eq</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">)),</span>
+
+                    <span class="c1"># mappings should be the same</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">off</span> <span class="o">!=</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">And</span><span class="p">(</span>
+                            <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+                                <span class="n">impl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">spec</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))),</span>
+                    
+                            <span class="c1"># mapping should be the same</span>
+                            <span class="n">spec</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">)))))</span>
+
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">ULT</span><span class="p">(</span><span class="n">fnargs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span> <span class="o">+</span> <span class="n">IndirectInodeDisk</span><span class="o">.</span><span class="n">NINDIRECT</span><span class="p">))</span>
+        <span class="c1"># pre = And(pre, ULT(fnargs[0], InodeDisk.NDIRECT))</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">pre</span><span class="p">,</span> <span class="n">fnargs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fname&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;bmap&#39;</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;crash&#39;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;fname&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;bunmap&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="n">pre</span><span class="p">)</span>
+
+        <span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">lbn</span><span class="p">))</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">pre</span>
+
+        <span class="n">lbn_indirect</span> <span class="o">=</span> <span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">Concat</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">lbn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">post_reverse_map</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">If</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">lbn</span><span class="p">,</span>
+                                            <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                            <span class="n">If</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">lbn_indirect</span><span class="p">,</span>
+                                                <span class="n">Concat</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">)),</span>
+                                                <span class="n">pre_reverse_map</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">post_reverse_map</span> <span class="o">=</span> <span class="n">pre_reverse_map</span>
+
+        <span class="n">post</span> <span class="o">=</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">],</span>
+                <span class="n">And</span><span class="p">(</span>
+                    <span class="c1"># Mapped blocks should be allocated</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">Not</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">)))),</span>
+                    <span class="c1"># # Mapping should be injective</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span> <span class="n">post_reverse_map</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">bid</span><span class="p">),</span>
+
+                    <span class="n">attr_eq</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">)),</span>
+
+                    <span class="c1"># mappings should be the same</span>
+                    <span class="n">Implies</span><span class="p">(</span><span class="n">off</span> <span class="o">!=</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">And</span><span class="p">(</span>
+                            <span class="n">Implies</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+                                <span class="n">impl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">impl</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))</span> <span class="o">==</span> <span class="n">spec</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">bid</span><span class="p">))),</span>
+
+                            <span class="c1"># mapping should be the same</span>
+                            <span class="n">spec</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span>
+                            <span class="p">))))</span>
+
+        <span class="k">yield</span> <span class="n">post</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDiskRefinement.match_set_iattr"><a class="viewcode-back" href="../test_xv6inode.html#test_xv6inode.IndirectInodeDiskRefinement.match_set_iattr">[docs]</a>    <span class="nd">@test</span><span class="o">.</span><span class="n">z3_option</span><span class="p">(</span><span class="n">AUTO_CONFIG</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">match_set_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">FreshAttr</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span></div>
+
+    <span class="nd">@test</span><span class="o">.</span><span class="n">z3_option</span><span class="p">(</span><span class="n">AUTO_CONFIG</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_create_bid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># bid = BitVec(fresh_name(&#39;ino&#39;), 64)</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ino&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">Concat</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">bid</span><span class="p">,)</span>
+
+    <span class="n">match_bunmap</span> <span class="o">=</span> <span class="n">_create_bid</span>
+    <span class="c1"># match_bunmap.debug = True</span>
+    <span class="n">match_bmap</span> <span class="o">=</span> <span class="n">_create_bid</span></div>
+    <span class="c1"># match_bmap.debug = True</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

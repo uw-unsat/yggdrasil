@@ -1,0 +1,1020 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>yggdrasil package &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="yav_xv6_main module" href="yav_xv6_main.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="yggdrasil-package">
+<h1>yggdrasil package<a class="headerlink" href="#yggdrasil-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-yggdrasil.diskspec">
+<span id="yggdrasil-diskspec-module"></span><h2>yggdrasil.diskspec module<a class="headerlink" href="#module-yggdrasil.diskspec" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="yggdrasil.diskspec.Allocator32">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">Allocator32</code><span class="sig-paren">(</span><em>_readfn</em>, <em>_start</em>, <em>_end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Allocator32"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Allocator32" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.Allocator32.alloc">
+<code class="descname">alloc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Allocator32.alloc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Allocator32.alloc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.Allocator64">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">Allocator64</code><span class="sig-paren">(</span><em>_readfn</em>, <em>_start</em>, <em>_end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Allocator64"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Allocator64" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.Allocator64.alloc">
+<code class="descname">alloc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Allocator64.alloc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Allocator64.alloc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.AsyncDisk">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">AsyncDisk</code><span class="sig-paren">(</span><em>mach</em>, <em>disk</em>, <em>cache=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#AsyncDisk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.AsyncDisk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.AsyncDisk.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#AsyncDisk.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.AsyncDisk.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.AsyncDisk.domain">
+<code class="descname">domain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#AsyncDisk.domain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.AsyncDisk.domain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.AsyncDisk.flush">
+<code class="descname">flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#AsyncDisk.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.AsyncDisk.flush" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.AsyncDisk.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#AsyncDisk.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.AsyncDisk.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.AsyncDisk.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>bid</em>, <em>data</em>, <em>guard=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#AsyncDisk.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.AsyncDisk.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.BitmapSpec">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">BitmapSpec</code><span class="sig-paren">(</span><em>disk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#BitmapSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.BitmapSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.BitmapSpec.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#BitmapSpec.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.BitmapSpec.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.BitmapSpec.is_set">
+<code class="descname">is_set</code><span class="sig-paren">(</span><em>bit</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#BitmapSpec.is_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.BitmapSpec.is_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.BitmapSpec.set_bit">
+<code class="descname">set_bit</code><span class="sig-paren">(</span><em>bit</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#BitmapSpec.set_bit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.BitmapSpec.set_bit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.BitmapSpec.unset_bit">
+<code class="descname">unset_bit</code><span class="sig-paren">(</span><em>bit</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#BitmapSpec.unset_bit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.BitmapSpec.unset_bit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.InodePackSpec">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">InodePackSpec</code><span class="sig-paren">(</span><em>metadisk</em>, <em>datadisk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodePackSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodePackSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodePackSpec.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodePackSpec.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodePackSpec.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodePackSpec.get_iattr">
+<code class="descname">get_iattr</code><span class="sig-paren">(</span><em>ino</em>, <em>block=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodePackSpec.get_iattr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodePackSpec.get_iattr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodePackSpec.get_mapping">
+<code class="descname">get_mapping</code><span class="sig-paren">(</span><em>ino</em>, <em>off</em>, <em>block=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodePackSpec.get_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodePackSpec.get_mapping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodePackSpec.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodePackSpec.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodePackSpec.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodePackSpec.set_iattr">
+<code class="descname">set_iattr</code><span class="sig-paren">(</span><em>ino</em>, <em>attr</em>, <em>block=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodePackSpec.set_iattr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodePackSpec.set_iattr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodePackSpec.set_mapping">
+<code class="descname">set_mapping</code><span class="sig-paren">(</span><em>ino</em>, <em>off</em>, <em>ptr</em>, <em>block=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodePackSpec.set_mapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodePackSpec.set_mapping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.InodeSpec">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">InodeSpec</code><span class="sig-paren">(</span><em>mach</em>, <em>disks</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#yggdrasil.diskspec.MultiTxnDisk" title="yggdrasil.diskspec.MultiTxnDisk"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.diskspec.MultiTxnDisk</span></code></a></p>
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.InodeSpec.ATTRS">
+<code class="descname">ATTRS</code><em class="property"> = 1</em><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.ATTRS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.InodeSpec.DATA">
+<code class="descname">DATA</code><em class="property"> = 2</em><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.DATA" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.InodeSpec.MAPPED">
+<code class="descname">MAPPED</code><em class="property"> = 0</em><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.MAPPED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.bmap">
+<code class="descname">bmap</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.bmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.bmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.bunmap">
+<code class="descname">bunmap</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.bunmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.bunmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.get_iattr">
+<code class="descname">get_iattr</code><span class="sig-paren">(</span><em>ino</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.get_iattr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.get_iattr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.is_mapped">
+<code class="descname">is_mapped</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.is_mapped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.is_mapped" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.mappingi">
+<code class="descname">mappingi</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.mappingi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.mappingi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>lbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.set_iattr">
+<code class="descname">set_iattr</code><span class="sig-paren">(</span><em>ino</em>, <em>attr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.set_iattr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.set_iattr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.InodeSpec.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>lbn</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#InodeSpec.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.InodeSpec.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.Machine">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">Machine</code><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Machine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Machine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.Machine.add_control">
+<code class="descname">add_control</code><span class="sig-paren">(</span><em>c</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Machine.add_control"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Machine.add_control" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.Machine.assumption">
+<code class="descname">assumption</code><a class="headerlink" href="#yggdrasil.diskspec.Machine.assumption" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.Machine.control">
+<code class="descname">control</code><a class="headerlink" href="#yggdrasil.diskspec.Machine.control" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.Machine.create_on">
+<code class="descname">create_on</code><span class="sig-paren">(</span><em>syncs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Machine.create_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Machine.create_on" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.Machine.create_synced">
+<code class="descname">create_synced</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Machine.create_synced"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Machine.create_synced" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.Machine.explain">
+<code class="descname">explain</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Machine.explain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Machine.explain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.Machine.on">
+<code class="descname">on</code><a class="headerlink" href="#yggdrasil.diskspec.Machine.on" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.MultiTxnDisk">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">MultiTxnDisk</code><span class="sig-paren">(</span><em>mach</em>, <em>disks</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.begin_tx">
+<code class="descname">begin_tx</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.begin_tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.begin_tx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.commit_tx">
+<code class="descname">commit_tx</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.commit_tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.commit_tx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.domain">
+<code class="descname">domain</code><span class="sig-paren">(</span><em>dev</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.domain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.domain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.range">
+<code class="descname">range</code><span class="sig-paren">(</span><em>dev</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.range" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>dev</em>, <em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.write_tx">
+<code class="descname">write_tx</code><span class="sig-paren">(</span><em>dev</em>, <em>lba</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.write_tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.write_tx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.MultiTxnDisk.writev">
+<code class="descname">writev</code><span class="sig-paren">(</span><em>iov</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#MultiTxnDisk.writev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.MultiTxnDisk.writev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">RangeVirtualTxnDisk</code><span class="sig-paren">(</span><em>start</em>, <em>end</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#RangeVirtualTxnDisk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#yggdrasil.diskspec.MultiTxnDisk" title="yggdrasil.diskspec.MultiTxnDisk"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.diskspec.MultiTxnDisk</span></code></a></p>
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.DATA">
+<code class="descname">DATA</code><em class="property"> = 1</em><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.DATA" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.MAPPED">
+<code class="descname">MAPPED</code><em class="property"> = 0</em><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.MAPPED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.bmap">
+<code class="descname">bmap</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#RangeVirtualTxnDisk.bmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.bmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.bunmap">
+<code class="descname">bunmap</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#RangeVirtualTxnDisk.bunmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.bunmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#RangeVirtualTxnDisk.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.is_mapped">
+<code class="descname">is_mapped</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#RangeVirtualTxnDisk.is_mapped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.is_mapped" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.readm">
+<code class="descname">readm</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#RangeVirtualTxnDisk.readm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.readm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.RangeVirtualTxnDisk.writem">
+<code class="descname">writem</code><span class="sig-paren">(</span><em>vbn</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#RangeVirtualTxnDisk.writem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.RangeVirtualTxnDisk.writem" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.Stat">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">Stat</code><span class="sig-paren">(</span><em>size</em>, <em>mtime</em>, <em>mode</em>, <em>nlink=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#Stat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.Stat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.Stat.bsize">
+<code class="descname">bsize</code><a class="headerlink" href="#yggdrasil.diskspec.Stat.bsize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.diskspec.Stat.fsize">
+<code class="descname">fsize</code><a class="headerlink" href="#yggdrasil.diskspec.Stat.fsize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.SyncDisk">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">SyncDisk</code><span class="sig-paren">(</span><em>mach</em>, <em>disk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#SyncDisk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.SyncDisk" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="yggdrasil.diskspec.SyncDisk.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#SyncDisk.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.SyncDisk.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.SyncDisk.flush">
+<code class="descname">flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#SyncDisk.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.SyncDisk.flush" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.SyncDisk.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#SyncDisk.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.SyncDisk.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.SyncDisk.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>bid</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#SyncDisk.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.SyncDisk.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.TxnDisk">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">TxnDisk</code><span class="sig-paren">(</span><em>mach</em>, <em>disk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.TxnDisk.begin_tx">
+<code class="descname">begin_tx</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk.begin_tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk.begin_tx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.TxnDisk.commit_tx">
+<code class="descname">commit_tx</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk.commit_tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk.commit_tx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.TxnDisk.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.TxnDisk.domain">
+<code class="descname">domain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk.domain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk.domain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.TxnDisk.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.TxnDisk.write_tx">
+<code class="descname">write_tx</code><span class="sig-paren">(</span><em>lba</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk.write_tx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk.write_tx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.TxnDisk.writev">
+<code class="descname">writev</code><span class="sig-paren">(</span><em>iov</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#TxnDisk.writev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.TxnDisk.writev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.diskspec.VirtualAsyncDisk">
+<em class="property">class </em><code class="descclassname">yggdrasil.diskspec.</code><code class="descname">VirtualAsyncDisk</code><span class="sig-paren">(</span><em>mach</em>, <em>mapped</em>, <em>disk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#VirtualAsyncDisk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.VirtualAsyncDisk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#yggdrasil.diskspec.AsyncDisk" title="yggdrasil.diskspec.AsyncDisk"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.diskspec.AsyncDisk</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.diskspec.VirtualAsyncDisk.bmap">
+<code class="descname">bmap</code><span class="sig-paren">(</span><em>vbn</em>, <em>val=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#VirtualAsyncDisk.bmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.VirtualAsyncDisk.bmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.VirtualAsyncDisk.bunmap">
+<code class="descname">bunmap</code><span class="sig-paren">(</span><em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#VirtualAsyncDisk.bunmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.VirtualAsyncDisk.bunmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.VirtualAsyncDisk.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#VirtualAsyncDisk.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.VirtualAsyncDisk.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.VirtualAsyncDisk.is_mapped">
+<code class="descname">is_mapped</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#VirtualAsyncDisk.is_mapped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.VirtualAsyncDisk.is_mapped" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.diskspec.VirtualAsyncDisk.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>vbn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/diskspec.html#VirtualAsyncDisk.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.diskspec.VirtualAsyncDisk.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-yggdrasil.server">
+<span id="yggdrasil-server-module"></span><h2>yggdrasil.server module<a class="headerlink" href="#module-yggdrasil.server" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="yggdrasil.server.Server">
+<em class="property">class </em><code class="descclassname">yggdrasil.server.</code><code class="descname">Server</code><a class="reference internal" href="_modules/yggdrasil/server.html#Server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.server.Server.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>term</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.check">
+<code class="descname">check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.handle_cmd">
+<code class="descname">handle_cmd</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.handle_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.handle_cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.model">
+<code class="descname">model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.model_evaluate">
+<code class="descname">model_evaluate</code><span class="sig-paren">(</span><em>term</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.model_evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.model_evaluate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.pop">
+<code class="descname">pop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.pop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.push">
+<code class="descname">push</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.push"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.push" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.server.Server.set">
+<code class="descname">set</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/server.html#Server.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.server.Server.set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-yggdrasil.solver">
+<span id="yggdrasil-solver-module"></span><h2>yggdrasil.solver module<a class="headerlink" href="#module-yggdrasil.solver" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="yggdrasil.solver.ModelProxy">
+<em class="property">class </em><code class="descclassname">yggdrasil.solver.</code><code class="descname">ModelProxy</code><span class="sig-paren">(</span><em>model_str</em>, <em>solver</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#ModelProxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.ModelProxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.solver.ModelProxy.eval">
+<code class="descname">eval</code><span class="sig-paren">(</span><em>term</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#ModelProxy.eval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.ModelProxy.eval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.solver.ModelProxy.evaluate">
+<code class="descname">evaluate</code><span class="sig-paren">(</span><em>term</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#ModelProxy.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.ModelProxy.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.solver.Solver">
+<em class="property">class </em><code class="descclassname">yggdrasil.solver.</code><code class="descname">Solver</code><a class="reference internal" href="_modules/yggdrasil/solver.html#Solver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.Solver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.solver.Solver.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>*terms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#Solver.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.Solver.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.solver.Solver.check">
+<code class="descname">check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#Solver.check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.Solver.check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.solver.Solver.model">
+<code class="descname">model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#Solver.model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.Solver.model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.solver.Solver.pop">
+<code class="descname">pop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#Solver.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.Solver.pop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.solver.Solver.push">
+<code class="descname">push</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#Solver.push"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.Solver.push" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.solver.Solver.set">
+<code class="descname">set</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#Solver.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.Solver.set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.solver.to_smt2">
+<code class="descclassname">yggdrasil.solver.</code><code class="descname">to_smt2</code><span class="sig-paren">(</span><em>*terms</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver.html#to_smt2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver.to_smt2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-yggdrasil.solver_utils">
+<span id="yggdrasil-solver-utils-module"></span><h2>yggdrasil.solver_utils module<a class="headerlink" href="#module-yggdrasil.solver_utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="yggdrasil.solver_utils.read">
+<code class="descclassname">yggdrasil.solver_utils.</code><code class="descname">read</code><span class="sig-paren">(</span><em>stream</em>, <em>count</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver_utils.html#read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver_utils.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.solver_utils.read_cmd">
+<code class="descclassname">yggdrasil.solver_utils.</code><code class="descname">read_cmd</code><span class="sig-paren">(</span><em>stream</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver_utils.html#read_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver_utils.read_cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.solver_utils.write_cmd">
+<code class="descclassname">yggdrasil.solver_utils.</code><code class="descname">write_cmd</code><span class="sig-paren">(</span><em>stream</em>, <em>command</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/solver_utils.html#write_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.solver_utils.write_cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-yggdrasil.test">
+<span id="yggdrasil-test-module"></span><h2>yggdrasil.test module<a class="headerlink" href="#module-yggdrasil.test" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="yggdrasil.test.DiskTest">
+<em class="property">class </em><code class="descclassname">yggdrasil.test.</code><code class="descname">DiskTest</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">unittest.case.TestCase</span></code></p>
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.enable_symbolic_execution">
+<code class="descname">enable_symbolic_execution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.enable_symbolic_execution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.enable_symbolic_execution" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.pprove">
+<code class="descname">pprove</code><span class="sig-paren">(</span><em>claim</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.pprove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.pprove" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.prove">
+<code class="descname">prove</code><span class="sig-paren">(</span><em>claim</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.prove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.prove" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.psolve">
+<code class="descname">psolve</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.psolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.psolve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>result</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.show">
+<code class="descname">show</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.show"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.show" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.DiskTest.solve">
+<code class="descname">solve</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#DiskTest.solve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.DiskTest.solve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.test.RefinementMeta">
+<em class="property">class </em><code class="descclassname">yggdrasil.test.</code><code class="descname">RefinementMeta</code><a class="reference internal" href="_modules/yggdrasil/test.html#RefinementMeta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.RefinementMeta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.test.RefinementTest">
+<em class="property">class </em><code class="descclassname">yggdrasil.test.</code><code class="descname">RefinementTest</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#RefinementTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.RefinementTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#yggdrasil.test.DiskTest" title="yggdrasil.test.DiskTest"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.test.DiskTest</span></code></a></p>
+<dl class="attribute">
+<dt id="yggdrasil.test.RefinementTest.DEBUG">
+<code class="descname">DEBUG</code><em class="property"> = False</em><a class="headerlink" href="#yggdrasil.test.RefinementTest.DEBUG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.RefinementTest.assumption">
+<code class="descname">assumption</code><span class="sig-paren">(</span><em>name</em>, <em>spec_mach</em>, <em>impl_mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#RefinementTest.assumption"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.RefinementTest.assumption" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.RefinementTest.post">
+<code class="descname">post</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#RefinementTest.post"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.RefinementTest.post" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.RefinementTest.pre">
+<code class="descname">pre</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#RefinementTest.pre"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.RefinementTest.pre" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.RefinementTest.pre_post">
+<code class="descname">pre_post</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#RefinementTest.pre_post"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.RefinementTest.pre_post" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.test.RefinementTest.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#RefinementTest.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.RefinementTest.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.test.fork_bool">
+<code class="descclassname">yggdrasil.test.</code><code class="descname">fork_bool</code><span class="sig-paren">(</span><em>test</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#fork_bool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.fork_bool" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.test.main">
+<code class="descclassname">yggdrasil.test.</code><code class="descname">main</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.test.z3_option">
+<code class="descclassname">yggdrasil.test.</code><code class="descname">z3_option</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/test.html#z3_option"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.test.z3_option" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-yggdrasil.ufarray">
+<span id="yggdrasil-ufarray-module"></span><h2>yggdrasil.ufarray module<a class="headerlink" href="#module-yggdrasil.ufarray" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="yggdrasil.ufarray.Block">
+<em class="property">class </em><code class="descclassname">yggdrasil.ufarray.</code><code class="descname">Block</code><span class="sig-paren">(</span><em>fn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#Block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.Block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.ufarray.Block.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#Block.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.Block.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.ufarray.Block.getrange">
+<code class="descname">getrange</code><span class="sig-paren">(</span><em>start</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#Block.getrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.Block.getrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.ufarray.Block.ite">
+<code class="descname">ite</code><span class="sig-paren">(</span><em>other</em>, <em>cond</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#Block.ite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.Block.ite" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.ufarray.Block.set">
+<code class="descname">set</code><span class="sig-paren">(</span><em>key</em>, <em>val</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#Block.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.Block.set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.ufarray.Block.setrange">
+<code class="descname">setrange</code><span class="sig-paren">(</span><em>start</em>, <em>s</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#Block.setrange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.Block.setrange" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="yggdrasil.ufarray.Block.size">
+<code class="descname">size</code><a class="headerlink" href="#yggdrasil.ufarray.Block.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.ConstBlock">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">ConstBlock</code><span class="sig-paren">(</span><em>v</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#ConstBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.ConstBlock" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.ConstDiskArray">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">ConstDiskArray</code><span class="sig-paren">(</span><em>blk</em>, <em>domain=BitVec(64)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#ConstDiskArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.ConstDiskArray" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.ConstString">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">ConstString</code><span class="sig-paren">(</span><em>size</em>, <em>v</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#ConstString"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.ConstString" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.ufarray.DiskArray">
+<em class="property">class </em><code class="descclassname">yggdrasil.ufarray.</code><code class="descname">DiskArray</code><span class="sig-paren">(</span><em>fn</em>, <em>domain=BitVec(64)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#DiskArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.DiskArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.ufarray.DiskArray.domain">
+<code class="descname">domain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#DiskArray.domain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.DiskArray.domain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.ufarray.DiskArray.ite">
+<code class="descname">ite</code><span class="sig-paren">(</span><em>other</em>, <em>cond</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#DiskArray.ite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.DiskArray.ite" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.ufarray.DiskArray.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>key</em>, <em>val</em>, <em>*guard</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#DiskArray.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.DiskArray.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.EmptyString">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">EmptyString</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#EmptyString"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.EmptyString" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.FreshBlock">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">FreshBlock</code><span class="sig-paren">(</span><em>prefix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#FreshBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.FreshBlock" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.FreshDiskArray">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">FreshDiskArray</code><span class="sig-paren">(</span><em>prefix</em>, <em>domain=BitVec(64)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#FreshDiskArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.FreshDiskArray" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.FreshSize">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">FreshSize</code><span class="sig-paren">(</span><em>prefix</em>, <em>domain=BitVec(64)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#FreshSize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.FreshSize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.FreshString">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">FreshString</code><span class="sig-paren">(</span><em>prefix</em>, <em>size=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#FreshString"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.FreshString" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.FreshUFunction">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">FreshUFunction</code><span class="sig-paren">(</span><em>name</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#FreshUFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.FreshUFunction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.ufarray.String">
+<em class="property">class </em><code class="descclassname">yggdrasil.ufarray.</code><code class="descname">String</code><span class="sig-paren">(</span><em>size</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#String"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.String" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.ufarray.String.ite">
+<code class="descname">ite</code><span class="sig-paren">(</span><em>other</em>, <em>cond</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#String.ite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.String.ite" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="yggdrasil.ufarray.String.size">
+<code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#String.size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.String.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="yggdrasil.ufarray.UFunction">
+<em class="property">class </em><code class="descclassname">yggdrasil.ufarray.</code><code class="descname">UFunction</code><span class="sig-paren">(</span><em>name</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#UFunction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.UFunction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="yggdrasil.ufarray.UFunction.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>key</em>, <em>val</em>, <em>guard=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#UFunction.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.UFunction.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.ufarray.tup_eq">
+<code class="descclassname">yggdrasil.ufarray.</code><code class="descname">tup_eq</code><span class="sig-paren">(</span><em>t1</em>, <em>t2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/ufarray.html#tup_eq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.ufarray.tup_eq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-yggdrasil.util">
+<span id="yggdrasil-util-module"></span><h2>yggdrasil.util module<a class="headerlink" href="#module-yggdrasil.util" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="yggdrasil.util.BitwiseBitField">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">BitwiseBitField</code><span class="sig-paren">(</span><em>p</em>, <em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#BitwiseBitField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.BitwiseBitField" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.Extend">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">Extend</code><span class="sig-paren">(</span><em>x</em>, <em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#Extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.Extend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.FreshBitVec">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">FreshBitVec</code><span class="sig-paren">(</span><em>name</em>, <em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#FreshBitVec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.FreshBitVec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.FreshBool">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">FreshBool</code><span class="sig-paren">(</span><em>b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#FreshBool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.FreshBool" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.If">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">If</code><span class="sig-paren">(</span><em>cond</em>, <em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#If"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.If" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.UMax">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">UMax</code><span class="sig-paren">(</span><em>a</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#UMax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.UMax" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.UMin">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">UMin</code><span class="sig-paren">(</span><em>a</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#UMin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.UMin" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.bbf">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">bbf</code><span class="sig-paren">(</span><em>p</em>, <em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#bbf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.bbf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.block_extend">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">block_extend</code><span class="sig-paren">(</span><em>d</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#block_extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.block_extend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.fresh_name">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">fresh_name</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#fresh_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.fresh_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.nop">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">nop</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#nop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.nop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.pack_list">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">pack_list</code><span class="sig-paren">(</span><em>*p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#pack_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.pack_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.solve">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">solve</code><span class="sig-paren">(</span><em>*args</em>, <em>**keywords</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#solve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.solve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="yggdrasil.util.unpack_list">
+<code class="descclassname">yggdrasil.util.</code><code class="descname">unpack_list</code><span class="sig-paren">(</span><em>p</em>, <em>size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/yggdrasil/util.html#unpack_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#yggdrasil.util.unpack_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-yggdrasil">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-yggdrasil" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">yggdrasil</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ast-rewrite.html">ast-rewrite module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bitmap.html">bitmap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dirinode.html">dirinode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dirspec.html">dirspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disk.html">disk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskimpl.html">diskimpl module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inodepack.html">inodepack module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kvimpl.html">kvimpl module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kvspec.html">kvspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lfs.html">lfs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lfs_fuse.html">lfs_fuse module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lfs_fuse_main.html">lfs_fuse_main module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logspec.html">logspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partition.html">partition module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="symbolicmap.html">symbolicmap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_bitmap.html">test_bitmap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_cp.html">test_cp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_dirspec.html">test_dirspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_diskspec.html">test_diskspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_fsck.html">test_fsck module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_fsck_run.html">test_fsck_run module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_inode.html">test_inode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_inodepack.html">test_inodepack module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_kv.html">test_kv module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_lfs.html">test_lfs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_partition.html">test_partition module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_tenaciousd.html">test_tenaciousd module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_ufarray.html">test_ufarray module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_waldisk.html">test_waldisk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_xv6inode.html">test_xv6inode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify.html">verify.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waldisk.html">waldisk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xv6inode.html">xv6inode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yav_dirimpl_fuse.html">yav_dirimpl_fuse.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yav_xv6_main.html">yav_xv6_main module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">yggdrasil package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">yggdrasil</a><ul>
+      <li>Previous: <a href="yav_xv6_main.html" title="previous chapter">yav_xv6_main module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/yggdrasil.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

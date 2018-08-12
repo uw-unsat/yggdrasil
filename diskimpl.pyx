@@ -65,6 +65,18 @@ cdef class Block:
         self.size = size / sizeof(uint64_t)
 
     cpdef Block copy(self):
+        """Summary line.
+
+        Extended description of function.
+
+        Args:
+            arg1 (int): Description of arg1
+            arg2 (str): Description of arg2
+
+        Returns:
+            bool: Description of return value
+
+        """
         cdef Block other = Block(self.size * sizeof(uint64_t))
         memcpy(other.buf, self.buf, self.size * sizeof(uint64_t))
         return other

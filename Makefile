@@ -20,7 +20,7 @@ prod: bitmap.so inodepack.so waldisk.so xv6inode.so yav_xv6_main.so dirinode.so
 
 .PHONY: verify
 verify: diskimpl.so
-	python2 verify.py
+	python verify.py
 
 %.so: %.o
 	gcc -march=native -o $@ $< $(LDFLAGS)
@@ -29,10 +29,10 @@ verify: diskimpl.so
 	gcc -march=native -O2 -c -fPIC $(CFLAGS) $<
 
 %.c: %.pyx
-	cython2 -X profile=$(PROFILE) $<
+	cython -X profile=$(PROFILE) -X binding=True $<
 
 %.c: %.py
-	cythonize2 -X profile=$(PROFILE) $<
+	cythonize -X profile=$(PROFILE) -X binding=True $<
 
 .SECONDARY:
 

@@ -1,0 +1,236 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>yggdrasil.util &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for yggdrasil.util</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">z3</span>
+
+<span class="kn">from</span> <span class="nn">z3</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">types</span>
+
+<span class="c1"># Stupid thing required by a recent-ish z3 update</span>
+<span class="n">Z3_LIBRARY_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Z3_LIBRARY_PATH&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">Z3_LIBRARY_PATH</span><span class="p">:</span>
+    <span class="n">z3</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">Z3_LIBRARY_PATH</span><span class="p">)</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">setrecursionlimit</span><span class="p">(</span><span class="mi">9999</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="nop"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.nop">[docs]</a><span class="k">def</span> <span class="nf">nop</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+<span class="nb">setattr</span><span class="p">(</span><span class="n">z3</span><span class="o">.</span><span class="n">AstRef</span><span class="p">,</span> <span class="s1">&#39;__del__&#39;</span><span class="p">,</span> <span class="n">nop</span><span class="p">)</span>
+
+
+<span class="c1"># block number (64 bits)</span>
+<span class="n">SizeSort</span>  <span class="o">=</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
+
+<span class="c1"># block data 32Kib</span>
+<span class="n">BlockSize</span> <span class="o">=</span> <span class="mi">32</span> <span class="o">*</span> <span class="mi">1024</span>
+<span class="n">LogBlockSize</span> <span class="o">=</span> <span class="n">BlockSize</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">BlockElementSort</span> <span class="o">=</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
+<span class="n">BlockOffsetSort</span> <span class="o">=</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="n">LogBlockSize</span> <span class="o">-</span> <span class="p">(</span><span class="n">BlockElementSort</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">bit_length</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">BlockSort</span> <span class="o">=</span> <span class="n">ArraySort</span><span class="p">(</span><span class="n">BitVecSort</span><span class="p">(</span><span class="n">LogBlockSize</span> <span class="o">-</span> <span class="mi">6</span><span class="p">),</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="mi">64</span><span class="p">))</span>
+
+<span class="c1"># disk: block number -&gt; block data</span>
+<span class="n">DevSort</span> <span class="o">=</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
+
+<span class="n">PartitionedSizeSort</span> <span class="o">=</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="n">SizeSort</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">+</span> <span class="n">DevSort</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+
+<span class="c1"># Zero = BitVecVal(0, BlockSort.size())</span>
+<span class="c1">#zero = K(BitVecSort(9), BitVecVal(0, 64))</span>
+
+<div class="viewcode-block" id="FreshBitVec"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.FreshBitVec">[docs]</a><span class="k">def</span> <span class="nf">FreshBitVec</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FreshBool"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.FreshBool">[docs]</a><span class="k">def</span> <span class="nf">FreshBool</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Bool</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="n">b</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="If"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.If">[docs]</a><span class="k">def</span> <span class="nf">If</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s1">&#39;ite&#39;</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">a</span><span class="o">.</span><span class="n">ite</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">cond</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">z3</span><span class="o">.</span><span class="n">If</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="bbf"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.bbf">[docs]</a><span class="k">def</span> <span class="nf">bbf</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Extract</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Extend"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.Extend">[docs]</a><span class="k">def</span> <span class="nf">Extend</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ZeroExt</span><span class="p">(</span><span class="n">size</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">x</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BitwiseBitField"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.BitwiseBitField">[docs]</a><span class="k">def</span> <span class="nf">BitwiseBitField</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">Extend</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">Extend</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">p</span> <span class="o">&gt;&gt;</span> <span class="n">start</span> <span class="o">&amp;</span> <span class="p">((</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="block_extend"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.block_extend">[docs]</a><span class="k">def</span> <span class="nf">block_extend</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Store</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span></div>
+    <span class="c1"># return ZeroExt(BlockSort.size() - d.size(), d)</span>
+
+
+<span class="c1"># Unsigned max</span>
+<div class="viewcode-block" id="UMax"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.UMax">[docs]</a><span class="k">def</span> <span class="nf">UMax</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="n">ULE</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UMin"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.UMin">[docs]</a><span class="k">def</span> <span class="nf">UMin</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="n">ULE</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fresh_name"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.fresh_name">[docs]</a><span class="k">def</span> <span class="nf">fresh_name</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">,</span> <span class="s2">&quot;idx&quot;</span><span class="p">):</span>
+        <span class="n">fresh_name</span><span class="o">.</span><span class="n">idx</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">fresh_name</span><span class="o">.</span><span class="n">idx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">fresh_name</span><span class="o">.</span><span class="n">idx</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">)</span></div>
+
+
+<span class="c1"># def prove(claim, **keywords):</span>
+<span class="c1">#     return solve(Not(claim), **keywords)</span>
+
+
+<div class="viewcode-block" id="solve"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.solve">[docs]</a><span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">keywords</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">()</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="o">**</span><span class="n">keywords</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">keywords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;show&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">smt</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;SMT&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">smt</span><span class="p">:</span>
+        <span class="n">PIPE</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">smt</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">stdin</span><span class="o">=</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">to_smt2</span><span class="p">())</span>
+        <span class="n">stdout</span> <span class="o">=</span> <span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">stdout</span> <span class="o">==</span> <span class="s1">&#39;unsat&#39;</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">unsat</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">unknown</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="n">unsat</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;no solution&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">r</span> <span class="o">==</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;failed to solve&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">model</span><span class="p">())</span>
+        <span class="k">except</span> <span class="n">Z3Exception</span><span class="p">:</span>
+            <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">model</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="pack_list"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.pack_list">[docs]</a><span class="k">def</span> <span class="nf">pack_list</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Concat</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="unpack_list"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.util.unpack_list">[docs]</a><span class="k">def</span> <span class="nf">unpack_list</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">/</span> <span class="n">size</span> 
+    <span class="k">while</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Extract</span><span class="p">(</span><span class="n">size</span> <span class="o">*</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span> <span class="o">*</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">p</span><span class="p">))</span>
+        <span class="n">k</span> <span class="o">-=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

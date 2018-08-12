@@ -1,0 +1,487 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>xv6inode &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for xv6inode</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">stat</span> <span class="k">import</span> <span class="n">S_IFDIR</span>
+
+<span class="kn">import</span> <span class="nn">cython</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">cython</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">diskimpl</span> <span class="k">import</span> <span class="n">Allocator</span><span class="p">,</span> <span class="n">DentryLookup</span>
+    <span class="kn">from</span> <span class="nn">waldisk</span> <span class="k">import</span> <span class="n">WALDisk</span>
+    <span class="kn">from</span> <span class="nn">disk</span> <span class="k">import</span> <span class="o">*</span>
+    <span class="kn">from</span> <span class="nn">bitmap</span> <span class="k">import</span> <span class="n">BitmapDisk</span>
+    <span class="kn">from</span> <span class="nn">inodepack</span> <span class="k">import</span> <span class="n">InodePackDisk</span>
+    <span class="kn">from</span> <span class="nn">dirinode</span> <span class="k">import</span> <span class="n">DirImpl</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;InodeDisk&#39;</span><span class="p">,</span> <span class="s1">&#39;IndirectInodeDisk&#39;</span><span class="p">]</span>
+
+
+<span class="n">Disk</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Disk&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;read&#39;</span><span class="p">,</span> <span class="s1">&#39;write&#39;</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="InodeDisk"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk">[docs]</a><span class="k">class</span> <span class="nc">InodeDisk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">FREEDISK</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">INODEMETADISK</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">INODEDATADISK</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">DATADISK</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="c1"># Number of direct blocks</span>
+    <span class="n">NDIRECT</span> <span class="o">=</span> <span class="mi">11</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txndisk</span><span class="p">,</span> <span class="n">Allocator</span><span class="p">,</span> <span class="n">Bitmap</span><span class="p">,</span> <span class="n">Inode</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_INODEDATADISK</span> <span class="o">=</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">INODEDATADISK</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_NDIRECT</span> <span class="o">=</span> <span class="n">InodeDisk</span><span class="o">.</span><span class="n">NDIRECT</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span> <span class="o">=</span> <span class="n">txndisk</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Bitmap</span> <span class="o">=</span> <span class="n">Bitmap</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Allocator</span> <span class="o">=</span> <span class="n">Allocator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_Inode</span> <span class="o">=</span> <span class="n">Inode</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allocator</span> <span class="o">=</span> <span class="n">Allocator</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">FREEDISK</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+                <span class="mi">0</span><span class="p">,</span> <span class="mi">1024</span><span class="p">)</span>
+
+        <span class="n">freedisk</span> <span class="o">=</span> <span class="n">Disk</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="k">lambda</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">FREEDISK</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">),</span>
+                        <span class="n">read</span><span class="o">=</span><span class="k">lambda</span> <span class="n">bid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">FREEDISK</span><span class="p">,</span> <span class="n">bid</span><span class="p">))</span>
+
+        <span class="n">inodemeta</span> <span class="o">=</span> <span class="n">Disk</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="k">lambda</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INODEMETADISK</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">),</span>
+                         <span class="n">read</span><span class="o">=</span><span class="k">lambda</span> <span class="n">bid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INODEMETADISK</span><span class="p">,</span> <span class="n">bid</span><span class="p">))</span>
+
+        <span class="n">inodedata</span> <span class="o">=</span> <span class="n">Disk</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="k">lambda</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_INODEDATADISK</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">),</span>
+                         <span class="n">read</span><span class="o">=</span><span class="k">lambda</span> <span class="n">bid</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_INODEDATADISK</span><span class="p">,</span> <span class="n">bid</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bitmap</span> <span class="o">=</span> <span class="n">Bitmap</span><span class="p">(</span><span class="n">freedisk</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span> <span class="o">=</span> <span class="n">Inode</span><span class="p">(</span><span class="n">inodemeta</span><span class="p">,</span> <span class="n">inodedata</span><span class="p">)</span>
+
+<div class="viewcode-block" id="InodeDisk.set_iattr"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.set_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">set_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">set_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.get_iattr"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.get_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">get_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.begin_tx"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.begin_tx">[docs]</a>    <span class="k">def</span> <span class="nf">begin_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="InodeDisk.commit_tx"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.commit_tx">[docs]</a>    <span class="k">def</span> <span class="nf">commit_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="InodeDisk.read"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATADISK</span><span class="p">,</span> <span class="n">lbn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.write_tx"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.write_tx">[docs]</a>    <span class="k">def</span> <span class="nf">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATADISK</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.write"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATADISK</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.mappingi"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.mappingi">[docs]</a>    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">eoff</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">mappingi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">64</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="c1"># ino = cython.type(&#39;uint64_t&#39;)</span>
+        <span class="c1"># assertion ino.size() / 8 == sizeof(uint64_t)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">eoff</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">get_mapping</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">eoff</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.is_mapped"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.is_mapped">[docs]</a>    <span class="k">def</span> <span class="nf">is_mapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="InodeDisk.is_free"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.is_free">[docs]</a>    <span class="k">def</span> <span class="nf">is_free</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bitmap</span><span class="o">.</span><span class="n">is_set</span><span class="p">(</span><span class="n">lbn</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="InodeDisk.alloc"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.alloc">[docs]</a>    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">lbn</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">alloc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># black box allocator returns a vbn</span>
+        <span class="n">lbn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allocator</span><span class="o">.</span><span class="n">alloc</span><span class="p">()</span>
+        <span class="c1"># Validation</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="n">lbn</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;inode.alloc: lbn is 0&quot;</span><span class="p">)</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">lbn</span><span class="p">),</span> <span class="s2">&quot;inode alloc: lbn not free&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bitmap</span><span class="o">.</span><span class="n">set_bit</span><span class="p">(</span><span class="n">lbn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lbn</span></div>
+
+<div class="viewcode-block" id="InodeDisk.free"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.free">[docs]</a>    <span class="k">def</span> <span class="nf">free</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bitmap</span><span class="o">.</span><span class="n">unset_bit</span><span class="p">(</span><span class="n">lbn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.bmap"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.bmap">[docs]</a>    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">eoff</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">iblock</span><span class="o">=</span><span class="s1">&#39;Block&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">old_lbn</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">valid</span><span class="o">=</span><span class="s1">&#39;bint&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">lbn</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">bmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">64</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">eoff</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+
+        <span class="n">iblock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span>
+
+        <span class="n">old_lbn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">get_mapping</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">eoff</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="n">iblock</span><span class="p">)</span>
+
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">old_lbn</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">valid</span><span class="p">:</span>
+            <span class="n">lbn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alloc</span><span class="p">()</span>
+
+            <span class="c1"># Data write</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="n">lbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">set_mapping</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">eoff</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="n">iblock</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">lbn</span>
+
+        <span class="k">if</span> <span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">old_lbn</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="InodeDisk.bunmap"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.bunmap">[docs]</a>    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">eoff</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">iblock</span><span class="o">=</span><span class="s1">&#39;Block&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">lbn</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">bunmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">64</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">eoff</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">Not</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">)):</span>
+            <span class="k">return</span>
+
+        <span class="n">iblock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span>
+
+        <span class="n">lbn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">get_mapping</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">eoff</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="n">iblock</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">lbn</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">free</span><span class="p">(</span><span class="n">lbn</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">set_mapping</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">eoff</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="n">iblock</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.crash"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">),</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">_Allocator</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">_Bitmap</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">_Inode</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeDisk.mkfs"><a class="viewcode-back" href="../xv6inode.html#xv6inode.InodeDisk.mkfs">[docs]</a>    <span class="k">def</span> <span class="nf">mkfs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bitmap</span><span class="o">.</span><span class="n">mkfs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inode</span><span class="o">.</span><span class="n">mkfs</span><span class="p">()</span></div></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk">[docs]</a><span class="k">class</span> <span class="nc">IndirectInodeDisk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">NINDIRECT</span> <span class="o">=</span> <span class="mi">512</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idisk</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_NINDIRECT</span> <span class="o">=</span> <span class="n">IndirectInodeDisk</span><span class="o">.</span><span class="n">NINDIRECT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span> <span class="o">=</span> <span class="n">idisk</span>
+
+<div class="viewcode-block" id="IndirectInodeDisk.get_iattr"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.get_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">get_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.set_iattr"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.set_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">set_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">set_iattr</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.read"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">lbn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.write_tx"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.write_tx">[docs]</a>    <span class="k">def</span> <span class="nf">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.write"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.begin_tx"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.begin_tx">[docs]</a>    <span class="k">def</span> <span class="nf">begin_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.commit_tx"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.commit_tx">[docs]</a>    <span class="k">def</span> <span class="nf">commit_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.mappingi"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.mappingi">[docs]</a>    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ndir</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">is_direct</span><span class="o">=</span><span class="s1">&#39;bint&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">vbnm</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ind_mapped</span><span class="o">=</span><span class="s1">&#39;bint&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ind_mapping</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ind_block</span><span class="o">=</span><span class="s1">&#39;Block&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">mappingi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="n">ndir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span>
+
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">64</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+
+        <span class="n">is_direct</span> <span class="o">=</span> <span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">ndir</span><span class="p">)</span>
+
+        <span class="n">off</span> <span class="o">=</span> <span class="n">USub</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="n">ndir</span><span class="p">)</span>
+
+        <span class="n">vbnm</span> <span class="o">=</span> <span class="n">Concat32</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="n">ndir</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">))</span>
+
+        <span class="n">ind_mapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbnm</span><span class="p">)</span>
+        <span class="n">ind_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">vbnm</span><span class="p">)</span>
+        <span class="n">ind_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ind_mapping</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="n">is_direct</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">vbn</span><span class="p">),</span> <span class="n">If</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NINDIRECT</span><span class="p">),</span> <span class="n">ind_mapped</span><span class="p">),</span> <span class="n">ind_block</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Extract</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">off</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.is_mapped"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.is_mapped">[docs]</a>    <span class="k">def</span> <span class="nf">is_mapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.is_free"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.is_free">[docs]</a>    <span class="k">def</span> <span class="nf">is_free</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">is_free</span><span class="p">(</span><span class="n">lbn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IndirectInodeDisk.bmap"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.bmap">[docs]</a>    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">eoff</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">imap</span><span class="o">=</span><span class="s1">&#39;Block&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">old_lbn</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">lbn</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">bmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">64</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">eoff</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">USub</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">))</span>
+
+        <span class="c1"># Off is direct</span>
+        <span class="k">if</span> <span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">bmap</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+
+        <span class="c1"># Off is not within bounds</span>
+        <span class="k">if</span> <span class="n">Not</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NINDIRECT</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+        <span class="n">mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">bmap</span><span class="p">(</span>
+                <span class="n">Concat32</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">)))</span>
+
+        <span class="n">imap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+
+        <span class="n">old_lbn</span> <span class="o">=</span> <span class="n">imap</span><span class="p">[</span><span class="n">eoff</span><span class="p">]</span>
+
+        <span class="c1"># Off is not-mapped</span>
+        <span class="k">if</span> <span class="n">old_lbn</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+
+            <span class="n">lbn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">alloc</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="n">lbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+            <span class="n">imap</span><span class="p">[</span><span class="n">eoff</span><span class="p">]</span> <span class="o">=</span> <span class="n">lbn</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">imap</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">lbn</span>
+        <span class="k">return</span> <span class="n">old_lbn</span></div>
+
+
+<div class="viewcode-block" id="IndirectInodeDisk.bunmap"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.bunmap">[docs]</a>    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">ino</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">off</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">eoff</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">imap</span><span class="o">=</span><span class="s1">&#39;Block&#39;</span><span class="p">)</span>
+    <span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">lbn</span><span class="o">=</span><span class="s1">&#39;uint64_t&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">bunmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">64</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)</span>
+        <span class="n">eoff</span> <span class="o">=</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">9</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">USub</span><span class="p">(</span><span class="n">vbn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">))</span>
+
+        <span class="c1"># Off is out of bounds</span>
+        <span class="k">if</span> <span class="n">Not</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NINDIRECT</span><span class="p">)):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Off is direct</span>
+        <span class="k">if</span> <span class="n">ULT</span><span class="p">(</span><span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">bunmap</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">mappingi</span><span class="p">(</span>
+                <span class="n">Concat32</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_NDIRECT</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">)))</span>
+
+        <span class="n">imap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+
+        <span class="c1"># Off is not mapped</span>
+        <span class="k">if</span> <span class="n">Or</span><span class="p">(</span><span class="n">mapping</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">imap</span><span class="p">[</span><span class="n">eoff</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">lbn</span> <span class="o">=</span> <span class="n">imap</span><span class="p">[</span><span class="n">eoff</span><span class="p">]</span>
+
+        <span class="n">imap</span><span class="p">[</span><span class="n">eoff</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">free</span><span class="p">(</span><span class="n">lbn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">imap</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IndirectInodeDisk.crash"><a class="viewcode-back" href="../xv6inode.html#xv6inode.IndirectInodeDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">))</span></div></div>
+
+
+
+<span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">fdisk</span><span class="o">=</span><span class="s1">&#39;DirImpl&#39;</span><span class="p">)</span>
+<span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">inode</span><span class="o">=</span><span class="s1">&#39;IndirectInodeDisk&#39;</span><span class="p">)</span>
+<span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">root_attr</span><span class="o">=</span><span class="s1">&#39;Stat&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">mkfs</span><span class="p">(</span><span class="n">fdisk</span><span class="p">):</span>
+    <span class="n">inode</span> <span class="o">=</span> <span class="n">fdisk</span><span class="o">.</span><span class="n">_inode</span>
+
+    <span class="n">inode</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+
+    <span class="n">attr</span> <span class="o">=</span> <span class="n">inode</span><span class="o">.</span><span class="n">get_iattr</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">attr</span><span class="o">.</span><span class="n">nlink</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Initialize the root directory</span>
+        <span class="n">attr</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="mi">0755</span> <span class="o">|</span> <span class="n">S_IFDIR</span>
+        <span class="n">attr</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="n">attr</span><span class="o">.</span><span class="n">nlink</span> <span class="o">=</span> <span class="mi">2</span>
+
+        <span class="n">inode</span><span class="o">.</span><span class="n">set_iattr</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+        <span class="c1"># Reserve datablock 0</span>
+        <span class="n">inode</span><span class="o">.</span><span class="n">_idisk</span><span class="o">.</span><span class="n">_bitmap</span><span class="o">.</span><span class="n">set_bit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Reserve inodes 0 and 1</span>
+        <span class="n">fdisk</span><span class="o">.</span><span class="n">_ibitmap</span><span class="o">.</span><span class="n">set_bit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">fdisk</span><span class="o">.</span><span class="n">_ibitmap</span><span class="o">.</span><span class="n">set_bit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">fdisk</span><span class="o">.</span><span class="n">_txndisk</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="n">_curr</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">def</span> <span class="nf">create_partition</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">_curr</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">_curr</span>
+    <span class="n">_curr</span> <span class="o">+=</span> <span class="n">size</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">size</span>
+    <span class="nb">print</span> <span class="s2">&quot;Creating partition:&quot;</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span>
+    <span class="k">return</span> <span class="n">PartitionAsyncDisk</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_fuse_inode</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Yxv6&#39;</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;imgpath&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;PATH&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path to fs image&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--isize&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;NUM&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of inode blocks (multiple of 32k)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--dsize&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;NUM&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number data blocks (multiple of 32k)&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--sync&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Synchronous mode&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">sync</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="n">disk</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">imgpath</span><span class="p">)</span>
+
+    <span class="n">isize</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">isize</span>
+    <span class="n">dsize</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dsize</span>
+
+    <span class="nb">print</span> <span class="s2">&quot;&gt;&gt;&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">imgpath</span>
+    <span class="nb">print</span> <span class="s2">&quot;&gt;&gt; number of inodes = </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">15</span> <span class="o">*</span> <span class="n">isize</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;&gt;&gt; fs size = </span><span class="si">%d</span><span class="s2"> MB&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="mi">15</span> <span class="o">*</span> <span class="n">dsize</span> <span class="o">*</span> <span class="mi">4096</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">20</span><span class="p">)</span>
+    <span class="nb">print</span> <span class="s2">&quot;&gt;&gt; sync = </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">sync</span>
+
+    <span class="n">ifreedisk</span> <span class="o">=</span> <span class="n">create_partition</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="n">isize</span><span class="p">)</span>
+    <span class="n">freedisk</span> <span class="o">=</span> <span class="n">create_partition</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="n">dsize</span><span class="p">)</span>
+    <span class="n">inodedisk</span> <span class="o">=</span> <span class="n">create_partition</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">15</span> <span class="o">*</span> <span class="n">isize</span> <span class="o">/</span> <span class="mi">32</span><span class="p">)</span>
+    <span class="n">datadisk</span> <span class="o">=</span> <span class="n">create_partition</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">15</span> <span class="o">*</span> <span class="n">dsize</span><span class="p">)</span>
+    <span class="n">logdisk</span> <span class="o">=</span> <span class="n">create_partition</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="mi">1027</span><span class="p">)</span>
+    <span class="n">orphandisk</span> <span class="o">=</span> <span class="n">create_partition</span><span class="p">(</span><span class="n">disk</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">txndisk</span> <span class="o">=</span> <span class="n">WALDisk</span><span class="p">(</span><span class="n">logdisk</span><span class="p">,</span> <span class="p">[</span><span class="n">freedisk</span><span class="p">,</span> <span class="n">inodedisk</span><span class="p">,</span> <span class="n">inodedisk</span><span class="p">,</span> <span class="n">datadisk</span><span class="p">,</span> <span class="n">ifreedisk</span><span class="p">,</span> <span class="n">orphandisk</span><span class="p">],</span> <span class="n">osync</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">sync</span><span class="p">)</span>
+    <span class="n">idisk</span> <span class="o">=</span> <span class="n">InodeDisk</span><span class="p">(</span><span class="n">txndisk</span><span class="p">,</span> <span class="n">Allocator</span><span class="p">,</span> <span class="n">BitmapDisk</span><span class="p">,</span> <span class="n">InodePackDisk</span><span class="p">)</span>
+    <span class="n">idisk</span><span class="o">.</span><span class="n">_INODEDATADISK</span> <span class="o">=</span> <span class="n">idisk</span><span class="o">.</span><span class="n">INODEMETADISK</span>
+    <span class="n">idisk</span> <span class="o">=</span> <span class="n">IndirectInodeDisk</span><span class="p">(</span><span class="n">idisk</span><span class="p">)</span>
+
+    <span class="n">fdisk</span> <span class="o">=</span> <span class="n">DirImpl</span><span class="p">(</span><span class="n">txndisk</span><span class="p">,</span> <span class="n">idisk</span><span class="p">,</span> <span class="n">Allocator</span><span class="p">,</span> <span class="n">BitmapDisk</span><span class="p">,</span> <span class="n">DentryLookup</span><span class="p">)</span>
+    <span class="n">mkfs</span><span class="p">(</span><span class="n">fdisk</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fdisk</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
