@@ -1,0 +1,15 @@
+sudo: required
+
+language: python
+
+services:
+        - docker
+
+before_install:
+        - docker pull ferrishu3886/yggdrasil_env
+
+script:
+        - docker run -t ferrishu3886/yggdrasil_env /bin/sh -c \
+        "git clone https://github.com/xxks-kkk/yggdrasil.git; \
+        cd yggdrasil; make > /dev/null;"
+        - bash test.sh
