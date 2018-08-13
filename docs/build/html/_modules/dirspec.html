@@ -1,0 +1,405 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dirspec &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dirspec</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+
+<span class="kn">from</span> <span class="nn">yggdrasil.util</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.diskspec</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">disk</span> <span class="k">import</span> <span class="o">*</span>
+
+
+<span class="n">InoSort</span> <span class="o">=</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">NameSort</span> <span class="o">=</span> <span class="n">SizeSort</span> <span class="c1"># todo</span>
+
+
+<div class="viewcode-block" id="FreshIno"><a class="viewcode-back" href="../dirspec.html#dirspec.FreshIno">[docs]</a><span class="k">def</span> <span class="nf">FreshIno</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">InoSort</span><span class="o">.</span><span class="n">size</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="FreshName"><a class="viewcode-back" href="../dirspec.html#dirspec.FreshName">[docs]</a><span class="k">def</span> <span class="nf">FreshName</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">NameSort</span><span class="o">.</span><span class="n">size</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="DirLook"><a class="viewcode-back" href="../dirspec.html#dirspec.DirLook">[docs]</a><span class="k">class</span> <span class="nc">DirLook</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inode</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="DirLook.locate_empty_slot"><a class="viewcode-back" href="../dirspec.html#dirspec.DirLook.locate_empty_slot">[docs]</a>    <span class="k">def</span> <span class="nf">locate_empty_slot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Summary line.</span>
+
+<span class="sd">        Extended description of function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            arg1 (int): Description of arg1</span>
+<span class="sd">            arg2 (str): Description of arg2</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: Description of return value</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirLook.locate_dentry"><a class="viewcode-back" href="../dirspec.html#dirspec.DirLook.locate_dentry">[docs]</a>    <span class="k">def</span> <span class="nf">locate_dentry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirLook.locate_empty_slot_ino"><a class="viewcode-back" href="../dirspec.html#dirspec.DirLook.locate_empty_slot_ino">[docs]</a>    <span class="k">def</span> <span class="nf">locate_empty_slot_ino</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ioff&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirLook.locate_dentry_ino"><a class="viewcode-back" href="../dirspec.html#dirspec.DirLook.locate_dentry_ino">[docs]</a>    <span class="k">def</span> <span class="nf">locate_dentry_ino</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;ioff&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">FreshBitVec</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Attributes"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes">[docs]</a><span class="k">class</span> <span class="nc">Attributes</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bsizefn</span><span class="p">,</span> <span class="n">fsizefn</span><span class="p">,</span> <span class="n">mtimefn</span><span class="p">,</span> <span class="n">modefn</span><span class="p">,</span> <span class="n">nlinkfn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bsizefn</span> <span class="o">=</span> <span class="n">bsizefn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fsizefn</span> <span class="o">=</span> <span class="n">fsizefn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mtimefn</span> <span class="o">=</span> <span class="n">mtimefn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modefn</span> <span class="o">=</span> <span class="n">modefn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nlinkfn</span> <span class="o">=</span> <span class="n">nlinkfn</span>
+
+<div class="viewcode-block" id="Attributes.set_bsize"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.set_bsize">[docs]</a>    <span class="k">def</span> <span class="nf">set_bsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">bsize</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bsizefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bsizefn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">bsize</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.set_fsize"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.set_fsize">[docs]</a>    <span class="k">def</span> <span class="nf">set_fsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">fsize</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fsizefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fsizefn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">fsize</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.set_mtime"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.set_mtime">[docs]</a>    <span class="k">def</span> <span class="nf">set_mtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mtimefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mtimefn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.set_mode"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.set_mode">[docs]</a>    <span class="k">def</span> <span class="nf">set_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modefn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.set_nlink"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.set_nlink">[docs]</a>    <span class="k">def</span> <span class="nf">set_nlink</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">nlink</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nlinkfn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nlinkfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">nlink</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.bsize"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.bsize">[docs]</a>    <span class="k">def</span> <span class="nf">bsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bsizefn</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.fsize"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.fsize">[docs]</a>    <span class="k">def</span> <span class="nf">fsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fsizefn</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.mtime"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.mtime">[docs]</a>    <span class="k">def</span> <span class="nf">mtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mtimefn</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.mode"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.mode">[docs]</a>    <span class="k">def</span> <span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modefn</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.nlink"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.nlink">[docs]</a>    <span class="k">def</span> <span class="nf">nlink</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nlinkfn</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Attributes.to_stat"><a class="viewcode-back" href="../dirspec.html#dirspec.Attributes.to_stat">[docs]</a>    <span class="k">def</span> <span class="nf">to_stat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Stat</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">Concat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bsize</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsize</span><span class="p">(</span><span class="n">ino</span><span class="p">)),</span>
+                    <span class="n">mtime</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mtime</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span>
+                    <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span>
+                    <span class="n">nlink</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="FreshAttributes"><a class="viewcode-back" href="../dirspec.html#dirspec.FreshAttributes">[docs]</a><span class="k">def</span> <span class="nf">FreshAttributes</span><span class="p">():</span>
+    <span class="n">bsizefn</span> <span class="o">=</span> <span class="n">FreshUFunction</span><span class="p">(</span><span class="s1">&#39;bsizefn&#39;</span><span class="p">,</span> <span class="n">InoSort</span><span class="p">,</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+    <span class="n">fsizefn</span> <span class="o">=</span> <span class="n">FreshUFunction</span><span class="p">(</span><span class="s1">&#39;fsizefn&#39;</span><span class="p">,</span> <span class="n">InoSort</span><span class="p">,</span> <span class="n">BitVecSort</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+    <span class="n">mtimefn</span> <span class="o">=</span> <span class="n">FreshUFunction</span><span class="p">(</span><span class="s1">&#39;mtimefn&#39;</span><span class="p">,</span> <span class="n">InoSort</span><span class="p">,</span> <span class="n">SizeSort</span><span class="p">)</span>
+    <span class="n">modefn</span> <span class="o">=</span> <span class="n">FreshUFunction</span><span class="p">(</span><span class="s1">&#39;modefn&#39;</span><span class="p">,</span> <span class="n">InoSort</span><span class="p">,</span> <span class="n">SizeSort</span><span class="p">)</span>
+    <span class="n">nlinkfn</span> <span class="o">=</span> <span class="n">FreshUFunction</span><span class="p">(</span><span class="s1">&#39;nlinkfn&#39;</span><span class="p">,</span> <span class="n">InoSort</span><span class="p">,</span> <span class="n">SizeSort</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Attributes</span><span class="p">(</span><span class="n">bsizefn</span><span class="p">,</span> <span class="n">fsizefn</span><span class="p">,</span> <span class="n">mtimefn</span><span class="p">,</span> <span class="n">modefn</span><span class="p">,</span> <span class="n">nlinkfn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DirSpec"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec">[docs]</a><span class="k">class</span> <span class="nc">DirSpec</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="n">dirfn</span><span class="p">,</span> <span class="n">direxists</span><span class="p">,</span> <span class="n">datafn</span><span class="p">,</span> <span class="n">ifreefn</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span> <span class="o">=</span> <span class="n">mach</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span> <span class="o">=</span> <span class="n">dirfn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span> <span class="o">=</span> <span class="n">direxists</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span> <span class="o">=</span> <span class="n">datafn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span> <span class="o">=</span> <span class="n">ifreefn</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span> <span class="o">=</span> <span class="n">attrs</span>
+
+<div class="viewcode-block" id="DirSpec.ialloc"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.ialloc">[docs]</a>    <span class="k">def</span> <span class="nf">ialloc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">on</span><span class="p">):</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="n">FreshIno</span><span class="p">(</span><span class="s1">&#39;spec-alloc-ino&#39;</span><span class="p">)</span>
+        <span class="c1"># allocator assumptions</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_ifree</span><span class="p">(</span><span class="n">ino</span><span class="p">))</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="n">ino</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_bsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_fsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_mtime</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_mode</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="c1"># mark the new inode as being used</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">BoolVal</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ino</span></div>
+
+<div class="viewcode-block" id="DirSpec.is_ifree"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.is_ifree">[docs]</a>    <span class="k">def</span> <span class="nf">is_ifree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirSpec.is_valid"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.is_valid">[docs]</a>    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">And</span><span class="p">(</span><span class="n">ino</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span><span class="p">(</span><span class="n">ino</span><span class="p">)),</span> <span class="n">UGT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span> <span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DirSpec.is_dir"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.is_dir">[docs]</a>    <span class="k">def</span> <span class="nf">is_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">And</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IFDIR</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirSpec.is_regular"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.is_regular">[docs]</a>    <span class="k">def</span> <span class="nf">is_regular</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">And</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IFDIR</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span></div>
+
+    <span class="c1">##</span>
+
+<div class="viewcode-block" id="DirSpec.read"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">blocknum</span><span class="p">,</span> <span class="n">off</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">blocknum</span><span class="p">,</span> <span class="n">off</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+    <span class="c1"># Truncate a file down to block `bnum`.</span>
+    <span class="c1"># truncate(ino, 0) will wipe the entire file.</span>
+<div class="viewcode-block" id="DirSpec.truncate"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.truncate">[docs]</a>    <span class="k">def</span> <span class="nf">truncate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="n">BitVecVal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">size</span><span class="p">))</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="n">ULE</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span> <span class="mi">32</span><span class="p">)))</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_regular</span><span class="p">(</span><span class="n">ino</span><span class="p">))</span>
+
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_fsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DirSpec.lookup"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.lookup">[docs]</a>    <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirSpec.get_iattr"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.get_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">get_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">to_stat</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirSpec.write"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">blocknum</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">4096</span><span class="p">):</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_regular</span><span class="p">(</span><span class="n">ino</span><span class="p">))</span>
+
+        <span class="n">_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="o">.</span><span class="n">_fn</span>
+        <span class="n">_bfn</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">_fn</span>
+
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+
+        <span class="n">fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="n">If</span><span class="p">(</span>
+                <span class="n">And</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="n">ino</span> <span class="o">==</span> <span class="n">i</span><span class="p">,</span> <span class="n">blocknum</span> <span class="o">==</span> <span class="n">b</span><span class="p">),</span> <span class="n">_bfn</span><span class="p">(</span><span class="n">o</span><span class="p">),</span> <span class="n">_fn</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">o</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="o">.</span><span class="n">_fn</span> <span class="o">=</span> <span class="n">fn</span>
+
+        <span class="n">assertion</span><span class="p">(</span><span class="n">ULE</span><span class="p">(</span><span class="n">blocknum</span><span class="p">,</span> <span class="mi">1048574</span><span class="p">))</span>
+
+        <span class="n">update</span> <span class="o">=</span> <span class="n">ULE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">fsize</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span> <span class="n">blocknum</span> <span class="o">*</span> <span class="mi">4096</span> <span class="o">+</span> <span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_bsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">blocknum</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">And</span><span class="p">(</span><span class="n">update</span><span class="p">,</span> <span class="n">on</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_fsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">blocknum</span> <span class="o">*</span> <span class="mi">4096</span> <span class="o">+</span> <span class="n">size</span><span class="p">,</span> <span class="n">And</span><span class="p">(</span><span class="n">update</span><span class="p">,</span> <span class="n">on</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DirSpec.rename"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.rename">[docs]</a>    <span class="k">def</span> <span class="nf">rename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">oparent</span><span class="p">,</span> <span class="n">oname</span><span class="p">,</span> <span class="n">nparent</span><span class="p">,</span> <span class="n">nname</span><span class="p">):</span>
+        <span class="c1"># old parent and new parent are directories</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">oparent</span><span class="p">))</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">nparent</span><span class="p">))</span>
+
+        <span class="c1"># destination does not exist</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="p">(</span><span class="n">nparent</span><span class="p">,</span> <span class="n">nname</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+
+        <span class="n">ino</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span><span class="p">(</span><span class="n">oparent</span><span class="p">,</span> <span class="n">oname</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">assertion</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">nparent</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">nparent</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">nparent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">nparent</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_bsize</span><span class="p">(</span><span class="n">nparent</span><span class="p">,</span> <span class="mi">522</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_fsize</span><span class="p">(</span><span class="n">nparent</span><span class="p">,</span> <span class="mi">4096</span> <span class="o">*</span> <span class="mi">522</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="n">assertion</span><span class="p">(</span><span class="n">ULT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">nparent</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">nparent</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">oparent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">oparent</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="c1"># remove oname from oparent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">oparent</span><span class="p">,</span> <span class="n">oname</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">BoolVal</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="c1"># associate newparent x newname -&gt; ino</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">nparent</span><span class="p">,</span> <span class="n">nname</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">ino</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">nparent</span><span class="p">,</span> <span class="n">nname</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirSpec.mknod"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.mknod">[docs]</a>    <span class="k">def</span> <span class="nf">mknod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">mtime</span><span class="p">):</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+
+        <span class="c1"># Parent is a directory</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">parent</span><span class="p">))</span>
+
+        <span class="c1"># A file with this name does not exist in the directory</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+
+        <span class="c1"># Get a fresh inode number.. It must be non-zero and unique</span>
+        <span class="n">ino</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ialloc</span><span class="p">(</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="c1"># Set attribute for parent directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_bsize</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="mi">522</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_fsize</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="mi">4096</span> <span class="o">*</span> <span class="mi">522</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="c1"># Set attributes for new inode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_bsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_fsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_mtime</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_mode</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="c1"># associate parent x name -&gt; ino</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">ino</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ino</span></div>
+
+<div class="viewcode-block" id="DirSpec.forget"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.forget">[docs]</a>    <span class="k">def</span> <span class="nf">forget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Or</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">ino</span><span class="p">)):</span>
+            <span class="k">return</span>
+
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">ino</span><span class="p">))</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+
+        <span class="c1"># Wipe data</span>
+        <span class="n">_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="o">.</span><span class="n">_fn</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="n">If</span><span class="p">(</span> <span class="n">And</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="n">ino</span> <span class="o">==</span> <span class="n">i</span><span class="p">),</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">_fn</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">o</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="o">.</span><span class="n">_fn</span> <span class="o">=</span> <span class="n">fn</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_bsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_fsize</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirSpec.unlink"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.unlink">[docs]</a>    <span class="k">def</span> <span class="nf">unlink</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c1"># parent is a directory</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">parent</span><span class="p">))</span>
+
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+
+        <span class="c1"># TODO: Failure?</span>
+        <span class="c1"># Decrement nlink</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="n">UGT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">parent</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="n">ino</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">assertion</span><span class="p">(</span><span class="n">UGT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="c1"># remove ino from parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">BoolVal</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ino</span></div>
+
+<div class="viewcode-block" id="DirSpec.rmdir"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.rmdir">[docs]</a>    <span class="k">def</span> <span class="nf">rmdir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c1"># parent is a directory</span>
+        <span class="k">if</span> <span class="n">Not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">parent</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span>
+
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+
+        <span class="n">ino</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">assertion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_dir</span><span class="p">(</span><span class="n">ino</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">UGT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTEMPTY</span>
+
+        <span class="c1"># Wipe data</span>
+        <span class="n">_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="o">.</span><span class="n">_fn</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">o</span><span class="p">:</span> <span class="n">If</span><span class="p">(</span> <span class="n">And</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="n">ino</span> <span class="o">==</span> <span class="n">i</span><span class="p">),</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">_fn</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">o</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="o">.</span><span class="n">_fn</span> <span class="o">=</span> <span class="n">fn</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">nlink</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="o">.</span><span class="n">set_nlink</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ino</span><span class="p">,</span> <span class="n">BitVecVal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirSpec.crash"><a class="viewcode-back" href="../dirspec.html#dirspec.DirSpec.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dirfn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_direxists</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datafn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ifreefn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attrs</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

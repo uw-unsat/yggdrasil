@@ -1,0 +1,219 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>test_waldisk &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for test_waldisk</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">z3</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">disk</span>
+<span class="kn">from</span> <span class="nn">waldisk</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">from</span> <span class="nn">yggdrasil.ufarray</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.util</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil.diskspec</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">yggdrasil</span> <span class="k">import</span> <span class="n">test</span>
+
+
+<div class="viewcode-block" id="WALDiskTestRefinement"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement">[docs]</a><span class="k">class</span> <span class="nc">WALDiskTestRefinement</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">RefinementTest</span><span class="p">):</span>
+<div class="viewcode-block" id="WALDiskTestRefinement.create_spec"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.create_spec">[docs]</a>    <span class="k">def</span> <span class="nf">create_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="n">dataarray1</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;dataarray&#39;</span><span class="p">)</span>
+        <span class="n">dataarray2</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;dataarray&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultiTxnDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="p">[</span><span class="n">dataarray1</span><span class="p">,</span> <span class="n">dataarray2</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="WALDiskTestRefinement.create_impl"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.create_impl">[docs]</a>    <span class="k">def</span> <span class="nf">create_impl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="n">logarray</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">logarray</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logarray</span> <span class="o">=</span> <span class="n">ConstDiskArray</span><span class="p">(</span><span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">dataarray1</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;dataarray&#39;</span><span class="p">)</span>
+        <span class="n">dataarray2</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;dataarray&#39;</span><span class="p">)</span>
+        <span class="n">logdisk</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">logarray</span><span class="p">)</span>
+        <span class="n">datadisk1</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">dataarray1</span><span class="p">)</span>
+        <span class="n">datadisk2</span> <span class="o">=</span> <span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">dataarray2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WALDisk</span><span class="p">(</span><span class="n">logdisk</span><span class="p">,</span> <span class="p">[</span><span class="n">datadisk1</span><span class="p">,</span> <span class="n">datadisk2</span><span class="p">],</span> <span class="n">osync</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WALDiskTestRefinement.equivalence_volatile"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.equivalence_volatile">[docs]</a>    <span class="k">def</span> <span class="nf">equivalence_volatile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span> <span class="n">And</span><span class="p">(</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">bid</span><span class="p">),</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">bid</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="WALDiskTestRefinement.equivalence_durable"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.equivalence_durable">[docs]</a>    <span class="k">def</span> <span class="nf">equivalence_durable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">bid</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;bid&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ForAll</span><span class="p">([</span><span class="n">bid</span><span class="p">],</span> <span class="n">And</span><span class="p">(</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">_datadisks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">),</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="mi">1</span><span class="p">](</span><span class="n">bid</span><span class="p">)</span> <span class="o">==</span> <span class="n">impl</span><span class="o">.</span><span class="n">_datadisks</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bid</span><span class="p">)))</span></div>
+
+    <span class="n">equivalence</span> <span class="o">=</span> <span class="n">equivalence_volatile</span>
+
+<div class="viewcode-block" id="WALDiskTestRefinement.call_write_tx_nocommit"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.call_write_tx_nocommit">[docs]</a>    <span class="k">def</span> <span class="nf">call_write_tx_nocommit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">impl</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+        <span class="n">spec</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">impl</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WALDiskTestRefinement.call_write_tx"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.call_write_tx">[docs]</a>    <span class="k">def</span> <span class="nf">call_write_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">impl</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">impl</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+        <span class="n">spec</span><span class="o">.</span><span class="n">begin_tx</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">impl</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+            <span class="n">spec</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+
+        <span class="n">impl</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span>
+        <span class="n">spec</span><span class="o">.</span><span class="n">commit_tx</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_gen_iov</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">WALDisk</span><span class="o">.</span><span class="n">LOG_MAX_ENTRIES</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">iov</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">iov</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">),</span> <span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)))</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">iov</span><span class="p">,)</span>
+
+    <span class="c1"># Verify writev</span>
+    <span class="n">match_writev</span> <span class="o">=</span> <span class="n">_gen_iov</span>
+    <span class="n">match_write_tx</span> <span class="o">=</span> <span class="n">_gen_iov</span>
+    <span class="n">match_write_tx_nocommit</span> <span class="o">=</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gen_iov</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">match_write_tx_nocommit</span><span class="o">.</span><span class="n">nocrash</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># recover-full(recover-partial(d)) = recover-full(d)</span>
+<div class="viewcode-block" id="WALDiskTestRefinement.test_idempotent_recovery"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.test_idempotent_recovery">[docs]</a>    <span class="k">def</span> <span class="nf">test_idempotent_recovery</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">logarray</span> <span class="o">=</span> <span class="n">FreshDiskArray</span><span class="p">(</span><span class="s1">&#39;logarray&#39;</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_impl</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">logarray</span><span class="o">=</span><span class="n">logarray</span><span class="p">)</span>
+        <span class="n">assumption</span> <span class="o">=</span> <span class="n">mach</span><span class="o">.</span><span class="n">assumption</span>
+
+        <span class="c1"># Recovery post-condition..</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">mach</span><span class="o">.</span><span class="n">_on</span><span class="p">,</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">_logdisk</span><span class="o">.</span><span class="n">_disk</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># block i after a full recovery</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># block i after a partial recovery followed by a full recovery</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">assumption</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">y</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="WALDiskTestRefinement.test_atomic"><a class="viewcode-back" href="../test_waldisk.html#test_waldisk.WALDiskTestRefinement.test_atomic">[docs]</a>    <span class="k">def</span> <span class="nf">test_atomic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__test_atomic</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__test_atomic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_impl</span><span class="p">(</span><span class="n">mach</span><span class="p">)</span>
+
+        <span class="n">bids</span> <span class="o">=</span> <span class="p">[</span><span class="n">FreshSize</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="p">[</span><span class="n">FreshBlock</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+        <span class="n">iov</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">bids</span><span class="p">,</span> <span class="n">xs</span><span class="p">)</span>
+
+        <span class="n">oldvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">bid</span><span class="p">)</span> <span class="k">for</span> <span class="n">bid</span> <span class="ow">in</span> <span class="n">bids</span><span class="p">]</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">writev</span><span class="p">(</span><span class="n">iov</span><span class="p">)</span>
+
+        <span class="n">assumption</span> <span class="o">=</span> <span class="n">And</span><span class="p">(</span><span class="n">Distinct</span><span class="p">(</span><span class="o">*</span><span class="n">bids</span><span class="p">),</span> <span class="n">mach</span><span class="o">.</span><span class="n">assumption</span><span class="p">)</span>
+
+        <span class="c1"># reboot &amp; recovery</span>
+        <span class="n">mach</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">)</span>
+        <span class="n">anyvs</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">bid</span><span class="p">)</span> <span class="k">for</span> <span class="n">bid</span> <span class="ow">in</span> <span class="n">bids</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">assumption</span><span class="p">,</span> <span class="n">Or</span><span class="p">(</span>
+            <span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">anyv</span> <span class="o">==</span> <span class="n">oldv</span> <span class="k">for</span> <span class="n">anyv</span><span class="p">,</span> <span class="n">oldv</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">anyvs</span><span class="p">,</span> <span class="n">oldvs</span><span class="p">)]),</span>
+            <span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">anyv</span> <span class="o">==</span> <span class="n">x</span> <span class="k">for</span> <span class="n">anyv</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">anyvs</span><span class="p">,</span> <span class="n">xs</span><span class="p">)]))))</span></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

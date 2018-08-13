@@ -1,0 +1,532 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>yggdrasil.diskspec &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for yggdrasil.diskspec</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">z3</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">util</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">ufarray</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+
+
+<span class="c1"># Abstract machine model: multiple disks will share the same</span>
+<span class="c1"># ordering constraints.  It captures two types of constraints:</span>
+<span class="c1"># - a synced being true implies the current &quot;on&quot; being true;</span>
+<span class="c1"># - the current &quot;on&quot; being true implies that all the previous</span>
+<span class="c1">#   &quot;on&quot;s being true.</span>
+<div class="viewcode-block" id="Machine"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Machine">[docs]</a><span class="k">class</span> <span class="nc">Machine</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ordering</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stacks</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ons</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_flushes</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__fresh_bool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stacks</span><span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">sexpr</span><span class="p">()]</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">extract_stack</span><span class="p">()[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ordering</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">b</span>
+
+    <span class="c1"># Create a sync bool variable, which is conditioned on &quot;on&quot;.</span>
+<div class="viewcode-block" id="Machine.create_synced"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Machine.create_synced">[docs]</a>    <span class="k">def</span> <span class="nf">create_synced</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">synced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__fresh_bool</span><span class="p">(</span><span class="s2">&quot;synced&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_flushes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">synced</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">synced</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on</span>
+        <span class="k">return</span> <span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Create a new &quot;on&quot;, which is conditioned on previous &quot;on&quot;.</span>
+    <span class="c1"># It also implies that pending synced&#39;s must be true.</span>
+<div class="viewcode-block" id="Machine.create_on"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Machine.create_on">[docs]</a>    <span class="k">def</span> <span class="nf">create_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">syncs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__fresh_bool</span><span class="p">(</span><span class="s2">&quot;on&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">syncs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ordering</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_on</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_on</span></div>
+
+<div class="viewcode-block" id="Machine.add_control"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Machine.add_control">[docs]</a>    <span class="k">def</span> <span class="nf">add_control</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">control</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_control</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">assumption</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ordering</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_ordering</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Machine.explain"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Machine.explain">[docs]</a>    <span class="k">def</span> <span class="nf">explain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="s2">&quot;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&quot;</span>
+
+        <span class="nb">print</span> <span class="s2">&quot;# Outstanding writes&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flushes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+                <span class="nb">print</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stacks</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">sexpr</span><span class="p">()][</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ons</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+                <span class="nb">print</span> <span class="s2">&quot;# Crash point&quot;</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stacks</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">sexpr</span><span class="p">()]:</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="s1">&#39;/usr/lib/&#39;</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="nb">print</span> <span class="n">i</span>
+                <span class="k">break</span>
+        <span class="nb">print</span> <span class="s2">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="AsyncDisk"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.AsyncDisk">[docs]</a><span class="k">class</span> <span class="nc">AsyncDisk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="n">disk</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span> <span class="o">=</span> <span class="n">mach</span>
+        <span class="c1"># cache is a partial evaluation of _disk without any ites</span>
+        <span class="c1"># Not required for correctness</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="n">disk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="n">disk</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_docache</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="n">cache</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_docache</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">synced</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">synced</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">synced</span><span class="p">)</span>
+
+    <span class="c1"># cache is updated; disk is either updated or unchanged</span>
+<div class="viewcode-block" id="AsyncDisk.write"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.AsyncDisk.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">guard</span><span class="o">=</span><span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="n">synced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_synced</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">synced</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">guard</span><span class="p">)</span></div>
+
+    <span class="c1"># flush is a full barrier</span>
+<div class="viewcode-block" id="AsyncDisk.flush"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.AsyncDisk.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_docache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="n">If</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dirty</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="AsyncDisk.read"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.AsyncDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span></div>
+
+    <span class="c1"># create a new copy of non-deterministic disk state</span>
+    <span class="c1"># note that this captures all the previous states</span>
+<div class="viewcode-block" id="AsyncDisk.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.AsyncDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AsyncDisk.domain"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.AsyncDisk.domain">[docs]</a>    <span class="k">def</span> <span class="nf">domain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">domain</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="VirtualAsyncDisk"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.VirtualAsyncDisk">[docs]</a><span class="k">class</span> <span class="nc">VirtualAsyncDisk</span><span class="p">(</span><span class="n">AsyncDisk</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="n">mapped</span><span class="p">,</span> <span class="n">disk</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VirtualAsyncDisk</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">disk</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span> <span class="o">=</span> <span class="n">mapped</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapped_cache</span> <span class="o">=</span> <span class="n">mapped</span>
+
+<div class="viewcode-block" id="VirtualAsyncDisk.read"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.VirtualAsyncDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="n">datablock</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">VirtualAsyncDisk</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">vbn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">),</span> <span class="n">datablock</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="VirtualAsyncDisk.is_mapped"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.VirtualAsyncDisk.is_mapped">[docs]</a>    <span class="k">def</span> <span class="nf">is_mapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapped_cache</span><span class="p">(</span><span class="n">vbn</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="VirtualAsyncDisk.bmap"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.VirtualAsyncDisk.bmap">[docs]</a>    <span class="k">def</span> <span class="nf">bmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">on</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mapped_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapped_cache</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="n">val</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="VirtualAsyncDisk.bunmap"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.VirtualAsyncDisk.bunmap">[docs]</a>    <span class="k">def</span> <span class="nf">bunmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bmap</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+    <span class="c1"># create a new copy of non-deterministic disk state</span>
+    <span class="c1"># note that this captures all the previous states</span>
+<div class="viewcode-block" id="VirtualAsyncDisk.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.VirtualAsyncDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mapped</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># Transactional disk - writev is atomic and persistent (sequential).</span>
+<div class="viewcode-block" id="TxnDisk"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk">[docs]</a><span class="k">class</span> <span class="nc">TxnDisk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="n">disk</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span> <span class="o">=</span> <span class="n">mach</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="n">disk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="n">disk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="TxnDisk.begin_tx"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk.begin_tx">[docs]</a>    <span class="k">def</span> <span class="nf">begin_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="TxnDisk.write_tx"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk.write_tx">[docs]</a>    <span class="k">def</span> <span class="nf">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># write_tx updates the cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TxnDisk.commit_tx"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk.commit_tx">[docs]</a>    <span class="k">def</span> <span class="nf">commit_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writev</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_txn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="TxnDisk.writev"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk.writev">[docs]</a>    <span class="k">def</span> <span class="nf">writev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iov</span><span class="p">):</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+        <span class="n">disk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span>
+        <span class="k">for</span> <span class="n">lba</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">iov</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TxnDisk.read"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TxnDisk.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TxnDisk.domain"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.TxnDisk.domain">[docs]</a>    <span class="k">def</span> <span class="nf">domain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">domain</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="MultiTxnDisk"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk">[docs]</a><span class="k">class</span> <span class="nc">MultiTxnDisk</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="n">disks</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span> <span class="o">=</span> <span class="n">mach</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span> <span class="o">=</span> <span class="n">disks</span><span class="p">[::]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span> <span class="o">=</span> <span class="n">disks</span><span class="p">[::]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MultiTxnDisk.begin_tx"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.begin_tx">[docs]</a>    <span class="k">def</span> <span class="nf">begin_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="MultiTxnDisk.write_tx"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.write_tx">[docs]</a>    <span class="k">def</span> <span class="nf">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dev</span><span class="p">,</span> <span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MultiTxnDisk.commit_tx"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.commit_tx">[docs]</a>    <span class="k">def</span> <span class="nf">commit_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">writev</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_txn</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_txn</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="MultiTxnDisk.writev"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.writev">[docs]</a>    <span class="k">def</span> <span class="nf">writev</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iov</span><span class="p">):</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">dev</span><span class="p">,</span> <span class="n">lba</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">iov</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">idev</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">)):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">[</span><span class="n">idev</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">[</span><span class="n">idev</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">dev</span><span class="o">==</span><span class="n">idev</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="n">idev</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="n">idev</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">lba</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">dev</span><span class="o">==</span><span class="n">idev</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultiTxnDisk.read"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">[</span><span class="n">dev</span><span class="p">](</span><span class="n">bid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultiTxnDisk.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultiTxnDisk.domain"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.domain">[docs]</a>    <span class="k">def</span> <span class="nf">domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span><span class="o">.</span><span class="n">domain</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MultiTxnDisk.range"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.MultiTxnDisk.range">[docs]</a>    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dev</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">[</span><span class="n">dev</span><span class="p">]</span><span class="o">.</span><span class="n">range</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Stat"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Stat">[docs]</a><span class="k">class</span> <span class="nc">Stat</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">nlink</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">mtime</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlink</span> <span class="o">=</span> <span class="n">nlink</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bsize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fsize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Extract</span><span class="p">(</span><span class="mi">31</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Stat(size=</span><span class="si">%s</span><span class="s2">, mtime=</span><span class="si">%s</span><span class="s2">, mode=</span><span class="si">%s</span><span class="s2">, nlink=</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlink</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mtime</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlink</span>
+        <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">And</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">mtime</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">mtime</span><span class="p">,</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">nlink</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">nlink</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InodeSpec"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec">[docs]</a><span class="k">class</span> <span class="nc">InodeSpec</span><span class="p">(</span><span class="n">MultiTxnDisk</span><span class="p">):</span>
+    <span class="n">MAPPED</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ATTRS</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">DATA</span> <span class="o">=</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="InodeSpec.set_iattr"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.set_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">set_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ATTRS</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeSpec.get_iattr"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.get_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">get_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ATTRS</span><span class="p">,</span> <span class="n">ino</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Stat</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="InodeSpec.is_mapped"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.is_mapped">[docs]</a>    <span class="k">def</span> <span class="nf">is_mapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="InodeSpec.mappingi"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.mappingi">[docs]</a>    <span class="k">def</span> <span class="nf">mappingi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">vbn</span></div>
+
+    <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">InodeSpec</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="InodeSpec.read"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATA</span><span class="p">,</span> <span class="n">lbn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeSpec.write"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATA</span><span class="p">,</span> <span class="n">lbn</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodeSpec.bmap"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.bmap">[docs]</a>    <span class="k">def</span> <span class="nf">bmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">vbn</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">vbn</span></div>
+
+<div class="viewcode-block" id="InodeSpec.bunmap"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodeSpec.bunmap">[docs]</a>    <span class="k">def</span> <span class="nf">bunmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="RangeVirtualTxnDisk"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.RangeVirtualTxnDisk">[docs]</a><span class="k">class</span> <span class="nc">RangeVirtualTxnDisk</span><span class="p">(</span><span class="n">MultiTxnDisk</span><span class="p">):</span>
+    <span class="n">MAPPED</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">DATA</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_end</span> <span class="o">=</span> <span class="n">end</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RangeVirtualTxnDisk</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RangeVirtualTxnDisk.is_mapped"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.RangeVirtualTxnDisk.is_mapped">[docs]</a>    <span class="k">def</span> <span class="nf">is_mapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="c1"># start &lt;= vbn &lt; end</span>
+        <span class="k">return</span> <span class="n">And</span><span class="p">(</span><span class="n">ULE</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">,</span> <span class="n">vbn</span><span class="p">),</span> <span class="n">ULT</span><span class="p">(</span><span class="n">vbn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">vbn</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RangeVirtualTxnDisk.readm"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.RangeVirtualTxnDisk.readm">[docs]</a>    <span class="k">def</span> <span class="nf">readm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">If</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATA</span><span class="p">,</span> <span class="n">vbn</span><span class="p">),</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RangeVirtualTxnDisk.writem"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.RangeVirtualTxnDisk.writem">[docs]</a>    <span class="k">def</span> <span class="nf">writem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATA</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RangeVirtualTxnDisk.bmap"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.RangeVirtualTxnDisk.bmap">[docs]</a>    <span class="k">def</span> <span class="nf">bmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_mapped</span><span class="p">(</span><span class="n">vbn</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">vbn</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">DATA</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RangeVirtualTxnDisk.bunmap"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.RangeVirtualTxnDisk.bunmap">[docs]</a>    <span class="k">def</span> <span class="nf">bunmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vbn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_tx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAPPED</span><span class="p">,</span> <span class="n">vbn</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RangeVirtualTxnDisk.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.RangeVirtualTxnDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disks</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SyncDisk"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.SyncDisk">[docs]</a><span class="k">class</span> <span class="nc">SyncDisk</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">,</span> <span class="n">disk</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span> <span class="o">=</span> <span class="n">mach</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="n">disk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="n">disk</span>
+
+<div class="viewcode-block" id="SyncDisk.write"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.SyncDisk.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mach</span><span class="o">.</span><span class="n">create_on</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bid</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SyncDisk.flush"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.SyncDisk.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SyncDisk.read"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.SyncDisk.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">(</span><span class="n">bid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SyncDisk.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.SyncDisk.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BitmapSpec"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.BitmapSpec">[docs]</a><span class="k">class</span> <span class="nc">BitmapSpec</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disk</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span> <span class="o">=</span> <span class="n">disk</span>
+
+<div class="viewcode-block" id="BitmapSpec.is_set"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.BitmapSpec.is_set">[docs]</a>    <span class="k">def</span> <span class="nf">is_set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bit</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">bit</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="BitmapSpec.set_bit"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.BitmapSpec.set_bit">[docs]</a>    <span class="k">def</span> <span class="nf">set_bit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bit</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bit</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="BitmapSpec.unset_bit"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.BitmapSpec.unset_bit">[docs]</a>    <span class="k">def</span> <span class="nf">unset_bit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bit</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">bit</span><span class="p">,</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="BitmapSpec.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.BitmapSpec.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BitmapSpec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_disk</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="InodePackSpec"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodePackSpec">[docs]</a><span class="k">class</span> <span class="nc">InodePackSpec</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadisk</span><span class="p">,</span> <span class="n">datadisk</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadisk</span> <span class="o">=</span> <span class="n">metadisk</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datadisk</span> <span class="o">=</span> <span class="n">datadisk</span>
+
+<div class="viewcode-block" id="InodePackSpec.read"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodePackSpec.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bid</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="InodePackSpec.set_mapping"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodePackSpec.set_mapping">[docs]</a>    <span class="k">def</span> <span class="nf">set_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">,</span> <span class="n">ptr</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datadisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span>
+        <span class="n">block</span><span class="p">[</span><span class="n">off</span><span class="p">]</span> <span class="o">=</span> <span class="n">ptr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_datadisk</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodePackSpec.get_mapping"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodePackSpec.get_mapping">[docs]</a>    <span class="k">def</span> <span class="nf">get_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">off</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datadisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ino</span><span class="p">)[</span><span class="n">off</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="InodePackSpec.set_iattr"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodePackSpec.set_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">set_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">attr</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadisk</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ino</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="InodePackSpec.get_iattr"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodePackSpec.get_iattr">[docs]</a>    <span class="k">def</span> <span class="nf">get_iattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ino</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadisk</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">ino</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Stat</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="InodePackSpec.crash"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.InodePackSpec.crash">[docs]</a>    <span class="k">def</span> <span class="nf">crash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mach</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadisk</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_datadisk</span><span class="o">.</span><span class="n">crash</span><span class="p">(</span><span class="n">mach</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="Allocator64"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Allocator64">[docs]</a><span class="k">class</span> <span class="nc">Allocator64</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_readfn</span><span class="p">,</span> <span class="n">_start</span><span class="p">,</span> <span class="n">_end</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Allocator64.alloc"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Allocator64.alloc">[docs]</a>    <span class="k">def</span> <span class="nf">alloc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;alloc&#39;</span><span class="p">),</span> <span class="mi">64</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Allocator32"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Allocator32">[docs]</a><span class="k">class</span> <span class="nc">Allocator32</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_readfn</span><span class="p">,</span> <span class="n">_start</span><span class="p">,</span> <span class="n">_end</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Allocator32.alloc"><a class="viewcode-back" href="../../yggdrasil.html#yggdrasil.diskspec.Allocator32.alloc">[docs]</a>    <span class="k">def</span> <span class="nf">alloc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">BitVec</span><span class="p">(</span><span class="n">fresh_name</span><span class="p">(</span><span class="s1">&#39;alloc&#39;</span><span class="p">),</span> <span class="mi">32</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

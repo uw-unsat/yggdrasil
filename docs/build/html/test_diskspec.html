@@ -1,0 +1,287 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>test_diskspec module &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="test_fsck module" href="test_fsck.html" />
+    <link rel="prev" title="test_dirspec module" href="test_dirspec.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-test_diskspec">
+<span id="test-diskspec-module"></span><h1>test_diskspec module<a class="headerlink" href="#module-test_diskspec" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="test_diskspec.AsyncDiskTest">
+<em class="property">class </em><code class="descclassname">test_diskspec.</code><code class="descname">AsyncDiskTest</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#AsyncDiskTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.AsyncDiskTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="yggdrasil.html#yggdrasil.test.DiskTest" title="yggdrasil.test.DiskTest"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.test.DiskTest</span></code></a></p>
+<dl class="method">
+<dt id="test_diskspec.AsyncDiskTest.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#AsyncDiskTest.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.AsyncDiskTest.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.AsyncDiskTest.test_flush">
+<code class="descname">test_flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#AsyncDiskTest.test_flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.AsyncDiskTest.test_flush" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.AsyncDiskTest.test_nocrash">
+<code class="descname">test_nocrash</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#AsyncDiskTest.test_nocrash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.AsyncDiskTest.test_nocrash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.AsyncDiskTest.test_prefix">
+<code class="descname">test_prefix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#AsyncDiskTest.test_prefix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.AsyncDiskTest.test_prefix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.AsyncDiskTest.test_reorder">
+<code class="descname">test_reorder</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#AsyncDiskTest.test_reorder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.AsyncDiskTest.test_reorder" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.AsyncDiskTest.test_write_two">
+<code class="descname">test_write_two</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#AsyncDiskTest.test_write_two"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.AsyncDiskTest.test_write_two" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="test_diskspec.FlushingDisk">
+<em class="property">class </em><code class="descclassname">test_diskspec.</code><code class="descname">FlushingDisk</code><span class="sig-paren">(</span><em>disk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#FlushingDisk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.FlushingDisk" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="test_diskspec.FlushingDisk.crash">
+<code class="descname">crash</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#FlushingDisk.crash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.FlushingDisk.crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.FlushingDisk.flush">
+<code class="descname">flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#FlushingDisk.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.FlushingDisk.flush" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.FlushingDisk.read">
+<code class="descname">read</code><span class="sig-paren">(</span><em>bid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#FlushingDisk.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.FlushingDisk.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.FlushingDisk.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>bid</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#FlushingDisk.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.FlushingDisk.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="test_diskspec.InodeSpecTest">
+<em class="property">class </em><code class="descclassname">test_diskspec.</code><code class="descname">InodeSpecTest</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#InodeSpecTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.InodeSpecTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="yggdrasil.html#yggdrasil.test.DiskTest" title="yggdrasil.test.DiskTest"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.test.DiskTest</span></code></a></p>
+<dl class="method">
+<dt id="test_diskspec.InodeSpecTest.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#InodeSpecTest.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.InodeSpecTest.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.InodeSpecTest.test_bmap">
+<code class="descname">test_bmap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#InodeSpecTest.test_bmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.InodeSpecTest.test_bmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.InodeSpecTest.test_bunmap">
+<code class="descname">test_bunmap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#InodeSpecTest.test_bunmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.InodeSpecTest.test_bunmap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.InodeSpecTest.test_compare_to_async">
+<code class="descname">test_compare_to_async</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#InodeSpecTest.test_compare_to_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.InodeSpecTest.test_compare_to_async" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="test_diskspec.SyncDiskTest">
+<em class="property">class </em><code class="descclassname">test_diskspec.</code><code class="descname">SyncDiskTest</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#SyncDiskTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.SyncDiskTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="yggdrasil.html#yggdrasil.test.DiskTest" title="yggdrasil.test.DiskTest"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.test.DiskTest</span></code></a></p>
+<dl class="method">
+<dt id="test_diskspec.SyncDiskTest.test_flushingdisk_is_sync">
+<code class="descname">test_flushingdisk_is_sync</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#SyncDiskTest.test_flushingdisk_is_sync"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.SyncDiskTest.test_flushingdisk_is_sync" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.SyncDiskTest.test_syncdisk_is_async">
+<code class="descname">test_syncdisk_is_async</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#SyncDiskTest.test_syncdisk_is_async"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.SyncDiskTest.test_syncdisk_is_async" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="test_diskspec.VirtualAsyncDiskTest">
+<em class="property">class </em><code class="descclassname">test_diskspec.</code><code class="descname">VirtualAsyncDiskTest</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#VirtualAsyncDiskTest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="yggdrasil.html#yggdrasil.test.RefinementTest" title="yggdrasil.test.RefinementTest"><code class="xref py py-class docutils literal notranslate"><span class="pre">yggdrasil.test.RefinementTest</span></code></a></p>
+<dl class="method">
+<dt id="test_diskspec.VirtualAsyncDiskTest.create_impl">
+<code class="descname">create_impl</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#VirtualAsyncDiskTest.create_impl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest.create_impl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.VirtualAsyncDiskTest.create_spec">
+<code class="descname">create_spec</code><span class="sig-paren">(</span><em>mach</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#VirtualAsyncDiskTest.create_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest.create_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.VirtualAsyncDiskTest.equivalence">
+<code class="descname">equivalence</code><span class="sig-paren">(</span><em>spec</em>, <em>impl</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#VirtualAsyncDiskTest.equivalence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest.equivalence" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.VirtualAsyncDiskTest.match_write">
+<code class="descname">match_write</code><span class="sig-paren">(</span><em>spec=None</em>, <em>impl=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/test_diskspec.html#VirtualAsyncDiskTest.match_write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest.match_write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.VirtualAsyncDiskTest.test_match_write">
+<code class="descname">test_match_write</code><span class="sig-paren">(</span><em>fname='write'</em>, <em>fn=&lt;function match_write&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest.test_match_write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.VirtualAsyncDiskTest.test_match_write_crash">
+<code class="descname">test_match_write_crash</code><span class="sig-paren">(</span><em>fname='write'</em>, <em>fn=&lt;function match_write&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest.test_match_write_crash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="test_diskspec.VirtualAsyncDiskTest.test_match_write_pre">
+<code class="descname">test_match_write_pre</code><span class="sig-paren">(</span><em>fname='write'</em>, <em>fn=&lt;function match_write&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#test_diskspec.VirtualAsyncDiskTest.test_match_write_pre" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">yggdrasil</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ast-rewrite.html">ast-rewrite module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bitmap.html">bitmap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dirinode.html">dirinode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dirspec.html">dirspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="disk.html">disk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskimpl.html">diskimpl module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inodepack.html">inodepack module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kvimpl.html">kvimpl module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kvspec.html">kvspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lfs.html">lfs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lfs_fuse.html">lfs_fuse module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lfs_fuse_main.html">lfs_fuse_main module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logspec.html">logspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="partition.html">partition module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="symbolicmap.html">symbolicmap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_bitmap.html">test_bitmap module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_cp.html">test_cp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_dirspec.html">test_dirspec module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">test_diskspec module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_fsck.html">test_fsck module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_fsck_run.html">test_fsck_run module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_inode.html">test_inode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_inodepack.html">test_inodepack module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_kv.html">test_kv module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_lfs.html">test_lfs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_partition.html">test_partition module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_tenaciousd.html">test_tenaciousd module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_ufarray.html">test_ufarray module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_waldisk.html">test_waldisk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="test_xv6inode.html">test_xv6inode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="verify.html">verify.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="waldisk.html">waldisk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xv6inode.html">xv6inode module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yav_dirimpl_fuse.html">yav_dirimpl_fuse.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yav_xv6_main.html">yav_xv6_main module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="yggdrasil.html">yggdrasil package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">yggdrasil</a><ul>
+      <li>Previous: <a href="test_dirspec.html" title="previous chapter">test_dirspec module</a></li>
+      <li>Next: <a href="test_fsck.html" title="next chapter">test_fsck module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/test_diskspec.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

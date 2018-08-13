@@ -1,7 +1,8 @@
 import sys
 import time
 import traceback
-from xv6inode import create_fuse_inode
+# from xv6inode import create_fuse_inode
+import xv6inode
 
 from llfuse cimport *
 from diskimpl cimport Block, Stat, Concat32
@@ -452,12 +453,14 @@ def main():
     global inode_obj
 
     if '--' in sys.argv:
+        # fargs: ['theFile.img']
         fargs = sys.argv[sys.argv.index('--') + 1:]
+        # sys.argv: ['yav_xv6_main.py', '-o', 'max_read=4096', '-o', 'max_write=4096', '-s', 'a']
         sys.argv = sys.argv[:sys.argv.index('--')]
     else:
         fargs = []
 
-    inode_obj = create_fuse_inode(fargs)
+    inode_obj = xv6inode.create_fuse_inode(fargs)
 
     cdef int argc = len(sys.argv)
     cdef char** argv = <char**>malloc(argc * sizeof(char**))

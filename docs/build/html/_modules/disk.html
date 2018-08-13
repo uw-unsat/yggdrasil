@@ -1,0 +1,174 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>disk &#8212; yggdrasil  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for disk</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">z3</span>
+<span class="kn">import</span> <span class="nn">diskimpl</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">symbolicmap</span>
+
+<span class="kn">from</span> <span class="nn">yggdrasil</span> <span class="k">import</span> <span class="n">diskspec</span>
+<span class="kn">from</span> <span class="nn">yggdrasil</span> <span class="k">import</span> <span class="n">ufarray</span>
+<span class="kn">from</span> <span class="nn">yggdrasil</span> <span class="k">import</span> <span class="n">util</span>
+
+
+<span class="n">native</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="k">def</span> <span class="nf">_native</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">native</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">a</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">b</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">inner</span>
+
+
+<div class="viewcode-block" id="AsyncDiskWrap"><a class="viewcode-back" href="../disk.html#disk.AsyncDiskWrap">[docs]</a><span class="k">def</span> <span class="nf">AsyncDiskWrap</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">mach</span> <span class="o">=</span> <span class="n">diskspec</span><span class="o">.</span><span class="n">Machine</span><span class="p">()</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">ufarray</span><span class="o">.</span><span class="n">ConstDiskArray</span><span class="p">(</span><span class="n">ConstBlock</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">diskspec</span><span class="o">.</span><span class="n">AsyncDisk</span><span class="p">(</span><span class="n">mach</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ZConcat32"><a class="viewcode-back" href="../disk.html#disk.ZConcat32">[docs]</a><span class="k">def</span> <span class="nf">ZConcat32</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="c1"># Z3 concat of 32 bit numbers</span>
+    <span class="c1"># Since the implementation only uses uint64&#39;s</span>
+    <span class="c1"># we have to know the the sizes for the numbers being concated.</span>
+    <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">32</span>
+    <span class="k">assert</span> <span class="n">b</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">32</span>
+    <span class="k">return</span> <span class="n">z3</span><span class="o">.</span><span class="n">Concat</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+<span class="n">Block</span> <span class="o">=</span> <span class="n">diskimpl</span><span class="o">.</span><span class="n">Block</span>
+
+<span class="c1"># TODO: More efficient native stat</span>
+<span class="n">Stat</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskspec</span><span class="o">.</span><span class="n">Stat</span><span class="p">,</span> <span class="n">diskspec</span><span class="o">.</span><span class="n">Stat</span><span class="p">)</span>
+<span class="n">AsyncDisk</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">AsyncDisk</span><span class="p">,</span> <span class="n">AsyncDiskWrap</span><span class="p">)</span>
+<span class="n">PartitionAsyncDisk</span> <span class="o">=</span> <span class="n">diskimpl</span><span class="o">.</span><span class="n">PartitionAsyncDisk</span>
+<span class="n">ConstBlock</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">ConstBlock</span><span class="p">,</span> <span class="n">ufarray</span><span class="o">.</span><span class="n">ConstBlock</span><span class="p">)</span>
+<span class="n">Extract</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Extract</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">Extract</span><span class="p">)</span>
+<span class="n">ULE</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">ULE</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">ULE</span><span class="p">)</span>
+<span class="n">ULT</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">ULT</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">ULT</span><span class="p">)</span>
+<span class="n">UGT</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">UGT</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">UGT</span><span class="p">)</span>
+<span class="n">UGE</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">UGE</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">UGE</span><span class="p">)</span>
+<span class="n">If</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">If</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">If</span><span class="p">)</span>
+<span class="n">Allocator32</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Allocator</span><span class="p">,</span> <span class="n">diskspec</span><span class="o">.</span><span class="n">Allocator32</span><span class="p">)</span>
+<span class="n">Allocator64</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Allocator</span><span class="p">,</span> <span class="n">diskspec</span><span class="o">.</span><span class="n">Allocator64</span><span class="p">)</span>
+<span class="n">Extend</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Extend</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">Extend</span><span class="p">)</span>
+<span class="n">BitVecVal</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">BitVecVal</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">BitVecVal</span><span class="p">)</span>
+<span class="n">Concat32</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Concat32</span><span class="p">,</span> <span class="n">ZConcat32</span><span class="p">)</span>
+<span class="n">Not</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Not</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">Not</span><span class="p">)</span>
+<span class="n">And</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">And</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">And</span><span class="p">)</span>
+<span class="n">Or</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Or</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">Or</span><span class="p">)</span>
+<span class="n">USub</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">USub</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span>
+<span class="n">URem</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">URem</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">URem</span><span class="p">)</span>
+<span class="n">UDiv</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">UDiv</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">UDiv</span><span class="p">)</span>
+<span class="n">LShR</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">LShR</span><span class="p">,</span> <span class="n">z3</span><span class="o">.</span><span class="n">LShR</span><span class="p">)</span>
+<span class="n">Dict</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="n">diskimpl</span><span class="o">.</span><span class="n">Dict</span><span class="p">,</span> <span class="n">symbolicmap</span><span class="o">.</span><span class="n">SymbolicMap</span><span class="p">)</span>
+<span class="n">UMax</span> <span class="o">=</span> <span class="n">_native</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">util</span><span class="o">.</span><span class="n">UMax</span><span class="p">)</span>
+
+<div class="viewcode-block" id="debug"><a class="viewcode-back" href="../disk.html#disk.debug">[docs]</a><span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">var</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">native</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">debug</span><span class="p">,</span> <span class="s1">&#39;debugs&#39;</span><span class="p">):</span>
+            <span class="n">debug</span><span class="o">.</span><span class="n">debugs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">debug</span><span class="o">.</span><span class="n">debugs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">msg</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">z3</span><span class="o">.</span><span class="n">simplify</span><span class="p">,</span> <span class="n">var</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="assertion"><a class="viewcode-back" href="../disk.html#disk.assertion">[docs]</a><span class="k">def</span> <span class="nf">assertion</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">native</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cond</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="s2">&quot;Assertion failure:&quot;</span><span class="p">,</span> <span class="n">msg</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_stack</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">cond</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">assertion</span><span class="p">,</span> <span class="s1">&#39;assertions&#39;</span><span class="p">):</span>
+            <span class="n">assertion</span><span class="o">.</span><span class="n">assertions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">assertion</span><span class="o">.</span><span class="n">assertions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cond</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">yggdrasil</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">yggdrasil</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Zeyuan Hu.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
