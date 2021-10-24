@@ -29,10 +29,10 @@ verify: diskimpl.so
 	gcc -march=native -O2 -c -fPIC $(CFLAGS) $<
 
 %.c: %.pyx
-	cython2 -X profile=$(PROFILE) $<
+	cython -X profile=$(PROFILE) $<
 
 %.c: %.py
-	cythonize2 -X profile=$(PROFILE) $<
+	cythonize -X profile=$(PROFILE) $<
 
 .SECONDARY:
 
