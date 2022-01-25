@@ -19,7 +19,7 @@ class LFSSpec(object):
         return If(0 < ino, ino, -errno.ENOENT)
 
     def get_attr(self, ino):
-        return Stat(bsize=0,
+        return Stat(size=0,
                     mode=self._modefn(ino),
                     mtime=self._mtimefn(ino))
 

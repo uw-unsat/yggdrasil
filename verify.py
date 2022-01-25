@@ -3,12 +3,13 @@ import sys
 import time
 
 files = [
-    ('test_waldisk.py ', 'WAL Layer'),
-    ('test_xv6inode.py', 'Inode layer'),
-    ('test_dirspec.py', 'Directory layer'),
-    ('test_bitmap.py', 'Bitmap disk refinement'),
-    ('test_inodepack.py', 'Inode disk refinement'),
-    ('test_partition.py', 'Multi disk partition refinement'),
+#    ('test_waldisk.py ', 'WAL Layer'),
+#    ('test_xv6inode.py', 'Inode layer'),
+#    ('test_dirspec.py', 'Directory layer'),
+#    ('test_bitmap.py', 'Bitmap disk refinement'),
+#    ('test_inodepack.py', 'Inode disk refinement'),
+#    ('test_partition.py', 'Multi disk partition refinement'),
+     ("test_lfs.py", "Verifying log file system")
 ]
 
 n = time.time()

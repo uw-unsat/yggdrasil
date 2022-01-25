@@ -15,7 +15,7 @@ class LFS(object):
     I_OFF_MTIME = 0
     I_OFF_MODE = 1
     I_OFF_DATA = 4
-    
+
     def __init__(self, disk):
         self._disk = disk
 
@@ -99,7 +99,7 @@ class LFS(object):
 
         blk = self._get_map(ino)
         blk = self._disk.read(blk)
-        s.bsize = 0
+        s.size = 0
         s.mode = blk[self.I_OFF_MODE]
         s.mtime = blk[self.I_OFF_MTIME]
 
