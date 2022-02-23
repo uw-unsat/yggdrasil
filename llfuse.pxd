@@ -43,7 +43,9 @@ cdef extern from "fuse_lowlevel.h":
 
 
     ctypedef fuse_req fuse_req_t
+    #CHANGED HERE
     ctypedef uint64_t fuse_ino_t
+    #ctypedef uint64_t fuse_ino_t
 
     cdef enum fuse_buf_copy_flags:
         # Buffer contains a file descriptor
@@ -99,7 +101,8 @@ cdef extern from "fuse_lowlevel.h":
         # it as an error.
         #
         # 
-        uint64_t generation;
+        # uint32_t generation;
+        uint32_t generation;
 
         #  Inode attributes.
         # 
@@ -192,6 +195,7 @@ cdef extern from "fuse_lowlevel.h":
         #   @param name the name to look up
         #   
         void (*lookup) (fuse_req_t req, fuse_ino_t parent, const char *name)
+        #void (*lookup) (fuse_ino_t cid, fuse_req_t req, fuse_ino_t parent, const char *name)
 
         #  
         #   Forget about an inode
@@ -229,7 +233,10 @@ cdef extern from "fuse_lowlevel.h":
         #   @param ino the inode number
         #   @param nlookup the number of lookups to forget
         #   
-        void (*forget) (fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
+
+        # CHANGED HERE
+        # void (*forget) (fuse_req_t req, fuse_ino_t ino, uint64_t nlookup)
+        void (*forget) (fuse_req_t req, fuse_ino_t ino, uint32_t nlookup)
 
         #  
         #   Get file attributes

@@ -64,7 +64,7 @@ def remove_flush_opt(obj):
 
     return objs
 
-print remove_flush_opt(lfs.LFS)
-for k in remove_flush_opt(lfs.LFS):
+print remove_flush_opt(lfs.ES)
+for k in remove_flush_opt(lfs.ES):
     print k['__source']
     print ""

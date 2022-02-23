@@ -209,8 +209,10 @@ class DirImpl(object):
         assertion(self.is_regular(ino), "write: writing to a non-regular inode")
 
         self._inode.begin_tx()
-
-        bid = self._inode.bmap(Concat32(ino, blocknum))
+        
+        #(dani): inode here has block map (acho); see where this is implemented
+        # seeee
+        bid = self._inode.bmap(Concat32(ino, blocknum)) 
         self._inode.write(bid, v)
 
         attr = self._inode.get_iattr(ino)

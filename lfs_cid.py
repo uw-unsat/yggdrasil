@@ -3,11 +3,10 @@ from disk import *
 import errno
 import time
 import z3
- 
+
 # new
 from yggdrasil.diskspec import *
 from yggdrasil import test
-import random
 
 class LFS(object):
     
@@ -54,7 +53,7 @@ class LFS(object):
         return r
 
     def _begin(self):
-        assert self._sb is None #(dani) commenting out these asserts has no effect on verification
+        assert self._sb is None #(dani) commenting out these asserts has no effect
         assert self._imap is None
 
         self._sb = self._disk.read(self.SUPERBLOCK)
@@ -151,7 +150,7 @@ class LFS(object):
 
         return s
 
-    def lookup(self, parent, name):
+    def lookup(self, cid, parent, name):
         
         #(dani) same question as in get_attr
         self._begin()
@@ -164,7 +163,8 @@ class LFS(object):
         return ino
 
     def exists(self, parent, name):
-        return 0 < self.lookup(parent, name)
+        cid = FreshBitVec("cid", 64)
+        return 0 < self.lookup(cid, parent, name)
 
 
     # Given directory inode number ("parent") and a new file name, mode and mtime, create a new file

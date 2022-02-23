@@ -21,7 +21,7 @@ cpdef inline Block ConstBlock(uint64_t c):
     if c == 0:
         return block
     for i in range(block.size):
-        block.buf[i] = c
+        block.buf[i] = c #(dani) What is this buf attribute? Some kind of buffer?
     return block
 
 
@@ -120,6 +120,8 @@ cdef class AsyncDisk:
     cpdef Block read(self, uint64_t blknum):
         cdef Block block = Block(BLOCKSIZE)
         cdef char* buf = <char*>block.buf
+
+        #(dani) Documentation says pread(fd, length, offset). But apparently you can add a buffer after fd?
         cdef ssize_t nbytes = pread(self.fd, buf, BLOCKSIZE, blknum * BLOCKSIZE)
         assert nbytes == BLOCKSIZE, "async disk: could not read entire blocksize"
         return block
@@ -224,7 +226,9 @@ cdef class DentryLookup:
                 return i
         return -1
 
-    cdef tuple locate_dentry_ino(self, uint64_t ino, uint64_t[15] name):
+   # CHANGED
+   # cdef tuple locate_dentry_ino(self, uint64_t ino, uint64_t[15] name):
+    cdef tuple locate_dentry_ino(self, unsigned int ino, uint64_t[15] name):
         cdef Block block
         cdef uint64_t i, bid
         cdef int res

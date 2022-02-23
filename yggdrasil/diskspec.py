@@ -237,10 +237,13 @@ class MultiTxnDisk(object):
 
 
 class Stat(object):
+    # CHANGED (added typ)
+    #def __init__(self, size, mtime, mode, typ, nlink=0):
     def __init__(self, size, mtime, mode, nlink=0):
         self.size = size
         self.mtime = mtime
         self.mode = mode
+       # self.typ = typ
         self.nlink = nlink
 
     @property
@@ -251,9 +254,12 @@ class Stat(object):
     def fsize(self):
         return Extract(31, 0, self.size)
 
+    # When adding other attributes, change InodeSpec below as well!
     def __str__(self):
+     #   return "Stat(size=%s, mtime=%s, mode=%s, type=%s nlink=%s)" % (self.size, self.mtime, self.mode, self.typ, self.nlink)
         return "Stat(size=%s, mtime=%s, mode=%s, nlink=%s)" % (self.size, self.mtime, self.mode, self.nlink)
-
+    
+    # CHANGED (added type)
     def __getitem__(self, idx):
         if idx == 0:
             return self.size
@@ -261,6 +267,8 @@ class Stat(object):
             return self.mtime
         if idx == 2:
             return self.mode
+        #if idx == 3:
+        #    return self.typ
         if idx == 3:
             return self.nlink
         raise IndexError("")
@@ -269,6 +277,7 @@ class Stat(object):
         return And(self.size == other.size,
                    self.mtime == other.mtime,
                    self.mode == other.mode,
+                  # self.typ == other.typ,
                    self.nlink == other.nlink)
 
 

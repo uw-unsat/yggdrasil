@@ -43,6 +43,7 @@ class DirRefinementTest(test.RefinementTest):
                 impl.is_valid(ino) == spec.is_valid(ino),
 
                 # GCable
+                # (dani) What is GCable??
                 Implies(impl.is_gcable(ino),
                     And(
                         spec._ifreefn(ino),

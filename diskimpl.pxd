@@ -115,5 +115,7 @@ cdef class DentryLookup:
     cdef int locate_dentry(self, Block block, uint64_t[15] name) nogil
     cdef int locate_empty_slot(self, Block block) nogil
 
-    cdef tuple locate_dentry_ino(self, uint64_t ino, uint64_t[15] name)
+    # CHANGED
+    #cdef tuple locate_dentry_ino(self, uint64_t ino, uint64_t[15] name)
+    cdef tuple locate_dentry_ino(self, unsigned int ino, uint64_t[15] name)
     cdef tuple locate_empty_slot_ino(self, uint64_t ino)

@@ -109,7 +109,8 @@ cdef void ll_readdir(fuse_req_t req, fuse_ino_t ino,
 
     cdef dirbuf b
     cdef Block block
-    cdef uint64_t i
+    #cdef uint64_t i
+    cdef uint32_t i
     cdef uint64_t name = 0
 
     if ino != 1:
