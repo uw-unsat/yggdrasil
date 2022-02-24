@@ -14,7 +14,8 @@ class DFSRefinement(test.RefinementTest):
         parentfn =  FreshUFunction('parentfn', SizeSort, SizeSort)
         modefn =  FreshUFunction('modefn', SizeSort, SizeSort)
         mtimefn =  FreshUFunction('mtimefn', SizeSort, SizeSort)
-        return DFSSpec(mach, dirfn, parentfn, modefn, mtimefn)
+        datafn = FreshUFunction('datafn', SizeSort, SizeSort) # check
+        return DFSSpec(mach, dirfn, parentfn, modefn, mtimefn, datafn)
 
     def create_impl(self, mach):
         array = FreshDiskArray('disk')
@@ -37,10 +38,12 @@ class DFSRefinement(test.RefinementTest):
                     And(impl.lookup(parent, name) < sb[1],
                         spec.get_attr(spec.lookup(parent, name)) == impl.get_attr(impl.lookup(parent, name)))),
 
-            spec.lookup(parent, name) == impl.lookup(parent, name))))
+            spec.lookup(parent, name) == impl.lookup(parent, name),
 
 
-        #(dani) QUESTION
+            #new
+            spec.read(spec.lookup(parent, name)) == impl.server.read(impl.lookup(parent, name)) ))) 
+        
         pre = And(pre, 
                   ForAll([off], Implies(ZeroExt(64 - off.size(), off) < sb[1],
                                         And(0 < imap[off], imap[off] < sb[0]))))

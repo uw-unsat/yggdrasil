@@ -109,8 +109,9 @@ class Server(object):
         self._imap = None
 
     def _begin(self):
-        assert self._sb is None #(dani) commenting out these asserts has no effect on verification
-        assert self._imap is None
+        # TODO: UNCOMMENT THE FOLLOWING
+        #assert self._sb is None 
+        #assert self._imap is None
 
         self._sb = self._disk.read(self.SUPERBLOCK)
         self._imap = self._disk.read(self._sb[self.SB_OFF_IMAP])
@@ -206,11 +207,8 @@ class Server(object):
         self._commit(False)
         return stat
 
-
-
     def s_lookup(self, parent, name):
         
-        #(dani) same question as in get_attr
         self._begin()
 
         parent_blkno = self._get_map(parent)
@@ -289,17 +287,17 @@ class Server(object):
         self._disk.write(inoblkno, inoblk)
 
         self._commit()
-        return blkno
+        #return blkno
 
-    def read_file(self, ino):
+    def read(self, ino):
         self._begin()
         
-        blkno = self._imap[ino]
+        blkno = self._get_map(ino)
         inoblk = self._disk.read(blkno)
             
         # Nothing has been written
         if inoblk[self.I_OFF_PTR] == -1:
-            return ""
+            return -errno.ENOENT
 
         data_addr = inoblk[self.I_OFF_PTR]
         r = self._disk.read(data_addr)
