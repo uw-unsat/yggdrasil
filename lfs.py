@@ -152,10 +152,15 @@ class LFS(object):
         return s
 
     def lookup(self, parent, name):
-        
+         
         #(dani) same question as in get_attr
         self._begin()
-
+        
+        #(dani) some debugging statements
+        # print("looking up name" , name, "from parent", parent) # THIS ALWAYS OUTPUT THE SAME THING SOMEHOW? Maybe because they're symbolic values, and so do not take on a form that python "sees"?? confused
+        #print(dir(name))
+        print("name id", name.get_id()) #(dani) I'm not even sure what "id" means in this case...
+        print("parent id", parent.get_id())
         parent_blkno = self._get_map(parent)
         parent_blk = self._disk.read(parent_blkno)
 

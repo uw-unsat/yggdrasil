@@ -2,73 +2,115 @@ import cython
 from disk import *
 import errno
 import time
-import z3
+from z3 import *
 
 import random
 import pdb
+from kvimpl import KVImpl
+from yggdrasil.util import fresh_name, SizeSort
+from yggdrasil.ufarray import StringElementSort
+
 
 class DFS(object):
 
     def __init__(self, disk):
         self.server = Server(disk)
         self._disk = self.server._disk
-        self._sb = self.server._disk
+        self._sb = self.server._sb
         self._imap = self.server._imap
 
         self.c1 = Client(self.server)
         self.c2 = Client(self.server)
 
     def lookup(self, parent, name):
+        # TODO: define a better lookup (union?). Or maybe keep this as is, and change the way we do the verification?
+        self._begin()
         client = random.choice([self.c1, self.c2])
         # debugging
-        pt = "client is 1!" if client == self.c1 else "client is 2!"
-        print(pt)
-
-        return client.c_lookup(parent, name)
+        #pt = "client is 1!" if client == self.c1 else "client is 2!"; print(pt)
+        res = client.c_lookup(parent, name)
+        self._commit(False)
+        return res
 
     def get_attr(self, ino):
         client = random.choice([self.c1, self.c2])
         # debugging
-        pt = "client is 1!" if client == self.c1 else "client is 2!"
-        print(pt)
+        #pt = "client is 1!" if client == self.c1 else "client is 2!"; print(pt)
 
         return client.c_get_attr(ino)
 
     def mknod(self, parent, name, mode, mtime):
         client = random.choice([self.c1, self.c2])
         # debugging
-        pt = "client is 1!" if client == self.c1 else "client is 2!"
-        print(pt)
+        #pt = "client is 1!" if client == self.c1 else "client is 2!"; print(pt)
         
         return client.c_mknod(parent, name, mode, mtime)
 
     def crash(self, mach):
         return self.__class__(self._disk.crash(mach))
 
+    def _begin(self):
+        assert self._sb is None 
+        assert self._imap is None
+
+        self._sb = self._disk.read(self.server.SUPERBLOCK)
+        self._imap = self._disk.read(self._sb[self.server.SB_OFF_IMAP])
+
+    def _balloc(self):
+        #(dani) get index of next available block 
+        a = self._sb[self.server.SB_OFF_BALLOC]
+        self._sb[self.server.SB_OFF_BALLOC] += 1
+
+        # Allocator returned a new block
+        assertion(0 < (a + 1))
+        return a
+
+    def _commit(self, write=True):
+        assert self._sb is not None
+        assert self._imap is not None
+
+        if write:
+            a = self._balloc()
+            self._disk.write(a, self._imap)
+            self._disk.flush()
+            self._sb[self.SB_OFF_IMAP] = a
+            self._disk.write(self.SUPERBLOCK, self._sb)
+            self._disk.flush()
+        
+        self._sb = None
+        self._imap = None
+
+    def read(self, ino):
+        # todo: write client interface for read
+        return self.server.read(ino)
 
 class Client(object):
     
     def __init__(self, server):
         self.server = server
-        self._disk = self.server._disk
-        self.cache = Dict()# TODO: store info in cache
+        self._disk = self.server._disk 
+        
+        # TODO: store info in cache
+        self._cache = Dict()
 
     def _set_cache(self, key, val):
-        self.cache.__setitem__(key, val)
-        return val
+        self._cache[key] = val
+        #return val
    
-    def _get_cache(self, key):
-        if self.cache.has_key(key):
-            return self.cache.get(key, BitVecVal(-1, 64))
-        return BitVecVal(-1, 64)
-
-    # TODO: use KVImpl for cache instead!
     def c_lookup(self, parent, name):
-        #ino_opt = self._get_cache(name)
-        #if ino_opt > 0:
-        #    return ino_opt
+       # print("looking up name", name, "of parent", parent)
+        ino_opt = self._cache.get((parent, name), BitVecVal(0, 64)) # ok
+
+#        Tests: if either of these hold, then the If statement below always chooses one path, which should not happen!
+#        assertion(UGT(ino_opt, BitVecVal(0, 64)))
+#        assertion(Not(UGT(ino_opt, BitVecVal(0, 64))))
+            
+        return If(UGT(ino_opt, BitVecVal(0, 64)), ino_opt, self.c_lookup_server(parent, name))
+
+    def c_lookup_server(self, parent, name):
+        #print("we had to contact the disk!!")
         ino = self.server.s_lookup(parent, name)
-        self._set_cache((self, parent), ino)
+        self._set_cache((parent, name), ino)
         return ino
 
     def c_get_attr(self, ino):
@@ -85,6 +127,8 @@ class Client(object):
         stat.mtime = mtime
         return self.c_set_attr(ino, stat)
 
+    def c_write(self, ino, mtime, data):
+        pass
 
 
 class Server(object):
@@ -173,7 +217,7 @@ class Server(object):
             res = If(And(oname == name, 0 < oino), oino, res)
         return res
 
-    #(dani) Find empty slot in directory
+#(dani) Find empty slot in directory
     def dir_find_empty(self, blk):
         res = BitVecVal(-errno.ENOSPC, 64)
         for i in range(2):
@@ -221,7 +265,6 @@ class Server(object):
     def exists(self, parent, name):
         return 0 < self.s_lookup(parent, name)
 
-
     def s_mknod(self, parent, name, mode, mtime):
 
         # check if the file exists 
@@ -251,7 +294,7 @@ class Server(object):
 
         inodeblk[self.I_OFF_MTIME] = mtime
         inodeblk[self.I_OFF_MODE] = mode
-        inodeblk[self.I_OFF_PTR] = -1
+        inodeblk[self.I_OFF_PTR] = BitVecVal(-1, 64)
         self._disk.write(blkno, inodeblk)
 
         # update parent directory
@@ -270,6 +313,7 @@ class Server(object):
 
         return ino
 
+    # Write to an existing file
     def write(self, ino, data):
         self._begin()
 
@@ -278,9 +322,10 @@ class Server(object):
 
         # write data
         datablk = ConstBlock(0)
-        self._disk.write(blkno, data)
+        self._disk.write(blkno, datablk)
 
         # update inode
+        # NOTE ON WRITE: see note below
         inoblkno = self._get_map(ino)
         inoblk = self._disk.read(inoblkno)
         inoblk[self.I_OFF_PTR] = blkno
@@ -289,21 +334,31 @@ class Server(object):
         self._commit()
         #return blkno
 
+    # Read contents of a file the ino points to, if any
     def read(self, ino):
         self._begin()
         
         blkno = self._get_map(ino)
         inoblk = self._disk.read(blkno)
-            
-        # Nothing has been written
-        if inoblk[self.I_OFF_PTR] == -1:
-            return -errno.ENOENT
+        
+        # If nothing has been written, return errno
+        err = -errno.ENOENT
+        res = err if inoblk[self.I_OFF_PTR] == -1 else self._read(inoblk)
+        #self._commit(False)
+        return res
+        #return If( ULT(inoblk[self.I_OFF_PTR], 0), -errno.ENOENT, self._read(inoblk))
+             
+    def _read(self, inoblk):
+        self._begin()
+        assertion(UGE(inoblk[self.I_OFF_PTR], 0))
 
+        # Currently, each file is one block, so we simply read that block
         data_addr = inoblk[self.I_OFF_PTR]
+        assertion(data_addr >= 0)
         r = self._disk.read(data_addr)
         
         self._commit(False)
-        return r
+        return r        
 
 def mkfs(disk):
     sb = disk._disk.read(0)
@@ -332,3 +387,32 @@ if __name__ == '__main__':
    # print dfs.mknod(1, 20, 2000, 2000)
    # print dfs.lookup(1, 20)
    # print dfs.get_attr(4)
+
+
+# NOTE ON WRITE: The inode update is not done in the usual log-structured way. In a typical LFS, we would create a new inode with the new information and then create a new inode mapping with the new, updated information. Here, the inode block and inode mapping block remain the same, and we simply write to them. This can be changed later. Also, it seems that the LFS implementation by the yggdrasil team also does not write a new inode mapping when updating the mapping (check).
+
+# Note on s_lookup: even though the dfs lookup in wrapped in a transaction, s_lookup (which is called by dfs' lookup) also has to be in a transaction or else verification fails! Isn't this odd. I thought transactions would recursrively apply to called functions
+
+# Sketches: 
+# transaction for clients:
+#    def _begin(self):
+#        assert self.server._sb is None 
+#        assert self.server._imap is None
+#
+#        self._sb = self._disk.read(self.server.SUPERBLOCK)
+#        self._imap = self._disk.read(self.server._sb[self.server.SB_OFF_IMAP])
+#
+#    def _commit(self, write=True):
+#        assert self._sb is not None
+#        assert self._imap is not None
+#
+#        if write:
+#            a = self._balloc()
+#            self._disk.write(a, self._imap)
+#            self._disk.flush()
+#            self._sb[self.server.SB_OFF_IMAP] = a
+#            self._disk.write(self.server.SUPERBLOCK, self.server._sb)
+#            self._disk.flush()
+#        
+#        self.server._sb = None
+#        self.server._imap = None

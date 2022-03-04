@@ -30,7 +30,7 @@ for i, pt in files:
     np = 0
     pn = time.time()
     while True:
-#        print("oi")
+        print("oi")
         out = w.stderr.read(1)
 #        print(out)
 #        print(w.returncode)
@@ -46,7 +46,8 @@ for i, pt in files:
                 print outp
                 sys.exit(1)
             break
-        if out == '.':
+        if out == '.': 
+#        if out == '.' or '=':
             if time.time() - lastp > 1:
                 np += 1
                 sys.stdout.write(out)

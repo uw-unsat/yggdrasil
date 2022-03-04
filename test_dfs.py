@@ -6,7 +6,7 @@ from disk import assertion, debug, Stat
 
 from yggdrasil.diskspec import *
 from yggdrasil import test
-
+from kvimpl import KVImpl
     
 class DFSRefinement(test.RefinementTest):
     def create_spec(self, mach):
@@ -42,7 +42,8 @@ class DFSRefinement(test.RefinementTest):
 
 
             #new
-            spec.read(spec.lookup(parent, name)) == impl.server.read(impl.lookup(parent, name)) ))) 
+            spec.read(spec.lookup(parent, name)) == impl.read(impl.lookup(parent, name)) 
+        ))) 
         
         pre = And(pre, 
                   ForAll([off], Implies(ZeroExt(64 - off.size(), off) < sb[1],
@@ -107,6 +108,8 @@ class DFSRefinement(test.RefinementTest):
         yield post
 
     def match_mknod(self):
+        print("MATCHING")
+        
         parent = BitVecVal(1, 64)
         name = FreshBitVec('name', 64)
         mode = FreshBitVec('mode', 64)

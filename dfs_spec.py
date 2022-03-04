@@ -52,9 +52,9 @@ class DFSSpec():
         
     def read(self, ino):
         data = self._datafn(ino)
-        return If(0 < data, data, -errno.ENOENT)
-    # def read(self, ino, offset, count):
-
+        return If(-1 < data, data, -errno.ENOENT)
+        #return If(-1 < data, data, -1)
+        #return If(-1 >= data, -1, data)
 
     def crash(self, mach):
         return self.__class__(mach, self._dirfn, self._parentfn, self._modefn, self._mtimefn, self._datafn)
