@@ -172,7 +172,8 @@ class DiskTest(unittest.TestCase):
 
     def show(self, *args, **kwargs):
         model = self._solve(*args, **kwargs)
- #       print("show")
+#        print(model) # (dani) # uncomment to debug
+#       print("show")
         self.assertIsNotNone(model)
         return model
 
@@ -233,7 +234,7 @@ class RefinementMeta(type):
 
 class RefinementTest(DiskTest):
     __metaclass__ = RefinementMeta
-    
+   
     DEBUG = False
     #DEBUG = True
 

@@ -47,14 +47,17 @@ class DFSSpec():
 
     # TODO: write and read
     def write(self, ino, data): 
-        data = Extract(data, 511, 0)
-        self._datafn.update(ino, data, guard=on)
-        
+        #data = Extract(511, 0, data)
+        on = self._mach.create_on([])
+        self._datafn.update(ino, data) #, guard=on)
+       
+
+    # NOTE: "If" cannot handle functions as arguments
+    # def read(self, ino, off):
     def read(self, ino):
-        data = self._datafn(ino)
-        return If(-1 < data, data, -errno.ENOENT)
-        #return If(-1 < data, data, -1)
-        #return If(-1 >= data, -1, data)
+        #res = self._datafn(ino, off)
+        res = self._datafn(ino)
+        return res
 
     def crash(self, mach):
         return self.__class__(mach, self._dirfn, self._parentfn, self._modefn, self._mtimefn, self._datafn)

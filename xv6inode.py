@@ -280,7 +280,8 @@ class IndirectInodeDisk(object):
     @cython.locals(mapping='uint64_t')
     @cython.locals(imap='Block')
     @cython.locals(lbn='uint64_t')
-    def bunmap(self, vbn):
+    #(dani) what is bun? and vbn? virtual block number?
+    def bunmap(self, vbn): 
         ino = Extract(64 - 1, 32, vbn)
         off = Extract(32 - 1, 0, vbn)
         eoff = Extract(9 - 1, 0, USub(vbn, self._idisk._NDIRECT))

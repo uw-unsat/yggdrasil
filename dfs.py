@@ -5,11 +5,9 @@ import time
 from z3 import *
 
 import random
-import pdb
 from kvimpl import KVImpl
 from yggdrasil.util import fresh_name, SizeSort
-from yggdrasil.ufarray import StringElementSort
-
+from yggdrasil.ufarray import Block, StringElementSort #, FreshBlock
 
 class DFS(object):
 
@@ -80,9 +78,12 @@ class DFS(object):
         self._sb = None
         self._imap = None
 
-    def read(self, ino):
-        # todo: write client interface for read
-        return self.server.read(ino)
+    def read(self, ino, off):
+        # TODO: write client interface for read
+        return self.server.read(ino, off)
+
+    def write(self, ino, data):
+        return self.server.s_write(ino, data)
 
 class Client(object):
     
@@ -90,7 +91,7 @@ class Client(object):
         self.server = server
         self._disk = self.server._disk 
         
-        # TODO: store info in cache
+        # TODO: store more info in cache
         self._cache = Dict()
 
     def _set_cache(self, key, val):
@@ -99,13 +100,13 @@ class Client(object):
    
     def c_lookup(self, parent, name):
        # print("looking up name", name, "of parent", parent)
-        ino_opt = self._cache.get((parent, name), BitVecVal(0, 64)) # ok
+        ino_opt = self._cache.get((parent, name), BitVecVal(-1, 64)) # ok
 
 #        Tests: if either of these hold, then the If statement below always chooses one path, which should not happen!
 #        assertion(UGT(ino_opt, BitVecVal(0, 64)))
 #        assertion(Not(UGT(ino_opt, BitVecVal(0, 64))))
             
-        return If(UGT(ino_opt, BitVecVal(0, 64)), ino_opt, self.c_lookup_server(parent, name))
+        return If(UGT(ino_opt, BitVecVal(-1, 64)), ino_opt, self.c_lookup_server(parent, name))
 
     def c_lookup_server(self, parent, name):
         #print("we had to contact the disk!!")
@@ -217,7 +218,7 @@ class Server(object):
             res = If(And(oname == name, 0 < oino), oino, res)
         return res
 
-#(dani) Find empty slot in directory
+    #(dani) Find empty slot in directory
     def dir_find_empty(self, blk):
         res = BitVecVal(-errno.ENOSPC, 64)
         for i in range(2):
@@ -252,13 +253,12 @@ class Server(object):
         return stat
 
     def s_lookup(self, parent, name):
-        
         self._begin()
 
         parent_blkno = self._get_map(parent)
         parent_blk = self._disk.read(parent_blkno)
-
         ino = self.dir_lookup(parent_blk, name)
+        
         self._commit(False)
         return ino
 
@@ -290,13 +290,12 @@ class Server(object):
             return eoff
 
         # write new inode
-        inodeblk = ConstBlock(0)
-
+        inodeblk = ConstBlock(0) 
+        
         inodeblk[self.I_OFF_MTIME] = mtime
         inodeblk[self.I_OFF_MODE] = mode
-        inodeblk[self.I_OFF_PTR] = BitVecVal(-1, 64)
-        self._disk.write(blkno, inodeblk)
-
+        self._disk.write(blkno, inodeblk) 
+        
         # update parent directory
         parent_blk[self.I_OFF_DATA + 2 * Extract(8, 0, eoff)] = name
         parent_blk[self.I_OFF_DATA + 2 * Extract(8, 0, eoff) + 1] = ino
@@ -309,56 +308,68 @@ class Server(object):
         self._set_map(ino, blkno)
         self._set_map(parent, new_parent_blkno)
 
+        # NEW: Allocate block for file's contents (initially empty)
+        datablkno = self._balloc()
+#        datablk = FreshBlock("file-data")
+        datablk = ConstBlock(0)
+        self._disk.write(datablkno, datablk)
+        inodeblk[self.I_OFF_PTR] = datablkno
+
         self._commit()
 
         return ino
 
-    # Write to an existing file
-    def write(self, ino, data):
+    # Write a block to an existing file
+    def s_write(self, ino, datablk):
+        #assertion(self.exists(ino)) # assertion or assert?
+        
         self._begin()
-
-        # allocate new block
-        blkno = self._balloc()
-
-        # write data
-        datablk = ConstBlock(0)
-        self._disk.write(blkno, datablk)
-
-        # update inode
-        # NOTE ON WRITE: see note below
-        inoblkno = self._get_map(ino)
-        inoblk = self._disk.read(inoblkno)
-        inoblk[self.I_OFF_PTR] = blkno
-        self._disk.write(inoblkno, inoblk)
+        print("A WRITE!!!!!!!!!!!!!!")
+        
+        # get location of file's content block
+        inodeblk = self._disk.read(ino)
+        datablkptr = inodeblk[self.I_OFF_PTR]
+            
+        # write block
+        self._disk.write(datablkptr, datablk)
 
         self._commit()
         #return blkno
 
     # Read contents of a file the ino points to, if any
-    def read(self, ino):
+    def read(self, ino, off):
+        print("start read")
         self._begin()
         
         blkno = self._get_map(ino)
         inoblk = self._disk.read(blkno)
         
-        # If nothing has been written, return errno
-        err = -errno.ENOENT
-        res = err if inoblk[self.I_OFF_PTR] == -1 else self._read(inoblk)
-        #self._commit(False)
-        return res
-        #return If( ULT(inoblk[self.I_OFF_PTR], 0), -errno.ENOENT, self._read(inoblk))
-             
-    def _read(self, inoblk):
-        self._begin()
-        assertion(UGE(inoblk[self.I_OFF_PTR], 0))
-
-        # Currently, each file is one block, so we simply read that block
+      #  if 1 >= inoblk[self.I_OFF_PTR]:
+      #      print("ok..............")
+      #      return BitVecVal(1, 64)
+        
+      #  print("UNEXPECTED!!@@")
         data_addr = inoblk[self.I_OFF_PTR]
         assertion(data_addr >= 0)
-        r = self._disk.read(data_addr)
-        
+        blk = self._disk.read(data_addr)
+        print("READ IS OF TYPE", type(blk))
+#        if isinstance(blk, Block):
+#            print("BANANANANANNANA")
+#        else:
+#            print("sobs.........")
+
+#        if (not isinstance(blk, Block)):
+#            blk = ConstBlock(0)
+           # blk = FreshBlock("read-dummy")
+
         self._commit(False)
-        return r        
+   #   print("r is",r._print(1)) 
+    #    print("r is obj ", r)
+        return blk[off]
+
+        # Idea: instead of always allocating a content block in mknod (a content block which may end up not being used, which is wasteful), we can find a way of keeping track of whether the file has been written to (for example, by the value stored in inode[self.I_OFF_PTR]), and, depending on that value, output a block that was read or a ConstBlock(0)
+        # for an example f this, see the read fn in "dirinode.py": res = If(And(is_mapped, ULT(blocknum, bsize)), res, ConstBlock(0))
+
 
 def mkfs(disk):
     sb = disk._disk.read(0)
@@ -415,4 +426,9 @@ if __name__ == '__main__':
 #            self._disk.flush()
 #        
 #        self.server._sb = None
+        
+# OLD WRITE
+# write data
+#for i in range(data):
+#            datablk[i] = data[i]
 #        self.server._imap = None

@@ -112,10 +112,12 @@ class Block(object):
         return Not(self.__eq__(other))
 
     def _print(self, num=None):
+        print('oi')
         if num is None:
             num = self.size
         for i in range(num):
             print simplify(self[i])
+        print("oi")
 
     @property
     def size(self):

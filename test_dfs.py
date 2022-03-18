@@ -7,14 +7,15 @@ from disk import assertion, debug, Stat
 from yggdrasil.diskspec import *
 from yggdrasil import test
 from kvimpl import KVImpl
-    
+
+
 class DFSRefinement(test.RefinementTest):
     def create_spec(self, mach):
         dirfn = FreshUFunction('dirfn', SizeSort, SizeSort, SizeSort)
         parentfn =  FreshUFunction('parentfn', SizeSort, SizeSort)
         modefn =  FreshUFunction('modefn', SizeSort, SizeSort)
         mtimefn =  FreshUFunction('mtimefn', SizeSort, SizeSort)
-        datafn = FreshUFunction('datafn', SizeSort, SizeSort) # check
+        datafn = FreshUFunction('datafn', SizeSort, BlockSort)
         return DFSSpec(mach, dirfn, parentfn, modefn, mtimefn, datafn)
 
     def create_impl(self, mach):
@@ -30,6 +31,11 @@ class DFSRefinement(test.RefinementTest):
         imap = impl._disk.read(sb[2])
         off = FreshBitVec("off", 9)
 
+        # new
+        ino = FreshBitVec('ino.pre', 64)
+        blkoff = FreshBitVec("boff.pre", BlockOffsetSort.size())
+    
+        
         pre = ForAll([name], Implies(name != 0, And(
             Implies(0 < spec._dirfn(parent, name),
                     parent == spec._parentfn(spec._dirfn(parent, name))),
@@ -40,10 +46,17 @@ class DFSRefinement(test.RefinementTest):
 
             spec.lookup(parent, name) == impl.lookup(parent, name),
 
+            # verifying reads
+            ForAll([blkoff],
+                    spec.read(spec.lookup(parent, name))[blkoff] ==
+                       impl.read(impl.lookup(parent, name), blkoff))
+        )))
 
-            #new
-            spec.read(spec.lookup(parent, name)) == impl.read(impl.lookup(parent, name)) 
-        ))) 
+# An alternative way of verifying reads:
+#        pre = And(pre, 
+#            ForAll([blkoff, ino],
+#                    spec.read(ino, blkoff) ==
+#                       impl.read(ino, blkoff)))
         
         pre = And(pre, 
                   ForAll([off], Implies(ZeroExt(64 - off.size(), off) < sb[1],
@@ -60,8 +73,10 @@ class DFSRefinement(test.RefinementTest):
                 #1 < sb[DFS.SB_OFF_IALLOC]
                 1 < sb[1],
                 )
-            
+        
+        # uncomment the second one to verify writes
         (spec, impl, (_, name0, _, _), (sino, iino)) = yield pre   
+        #(spec, impl, (_, name0, _, _, _, _), (_, _), (sino, iino)) = yield pre   
 
 
         #print(self.show(pre))
@@ -76,6 +91,9 @@ class DFSRefinement(test.RefinementTest):
         sb = impl._disk.read(0)
         imap = impl._disk.read(sb[2])
 
+        # remove later
+        blkoff1 = BitVecVal(1, BlockOffsetSort.size())
+
         post = ForAll([name], Implies(name != 0, And(
             Implies(0 < spec._dirfn(parent, name),
                     parent == spec._parentfn(spec._dirfn(parent, name))),
@@ -84,8 +102,14 @@ class DFSRefinement(test.RefinementTest):
                     And(impl.lookup(parent, name) < sb[1],
                         spec.get_attr(spec.lookup(parent, name)) == impl.get_attr(impl.lookup(parent, name)))),
 
-            spec.lookup(parent, name) == impl.lookup(parent, name))))
+            spec.lookup(parent, name) == impl.lookup(parent, name),
 
+            # verifying reads
+        #    Implies(0 < impl.lookup(parent, name),
+        #        ForAll([blkoff],
+        #            spec.read(spec.lookup(parent, name))[blkoff] ==
+        #                impl.read(impl.lookup(parent, name), blkoff)))
+        )))
 
         post = And(post, 
                   ForAll([off], Implies(ZeroExt(64 - off.size(), off) < sb[1],
@@ -108,7 +132,7 @@ class DFSRefinement(test.RefinementTest):
         yield post
 
     def match_mknod(self):
-        print("MATCHING")
+        print("MATCHING MKNOD")
         
         parent = BitVecVal(1, 64)
         name = FreshBitVec('name', 64)
@@ -117,6 +141,26 @@ class DFSRefinement(test.RefinementTest):
         assertion(name != 0)
         yield (parent, name, mode, mtime)
 
+   # def match_write(self):
+   #     print("MATCHING WRITE")
+
+#  #      ino = FreshBitVec('match-write-ino', 64)
+#  #     data = FreshBlock('match-write-data')
+   #     ino = BitVecVal(10, 64)
+   #     data = ConstBlock(0)
+   #     yield(ino, data)
+
+
 if __name__ == '__main__':
     test.main()
+
+# SKETCHES
+
+# print in 
+#        print('IMPL READ!!!', impl.read(impl.lookup(parent, name), BitVecVal(1, BlockOffsetSort.size())))
+#        rd = impl.read(impl.lookup(parent, name), BitVecVal(1, BlockOffsetSort.size()))
+#        print("TYPE IS", dir(rd))
+     #  for r in rd:
+            #print("r is", r)
+      #      print("t rype is", r)
 

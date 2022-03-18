@@ -100,7 +100,6 @@ cdef class Block:
             if (i + 1) % 64 == 0:
                 print
 
-
 cdef class AsyncDisk:
     def __cinit__(self, char* fn, mode_t mode=O_RDWR):
         self.fn = fn

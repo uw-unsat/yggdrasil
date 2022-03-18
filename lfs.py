@@ -175,7 +175,7 @@ class LFS(object):
     # Given directory inode number ("parent") and a new file name, mode and mtime, create a new file
     def mknod(self, parent, name, mode, mtime):
 
-        # check if the file exists 
+        # check a file with this name already exists 
         #(dani) this seems more to be for semantic help, since it does not really affect the verification (and in many file sys you can indeed create a new file that overwrites an old one of the same name!)
         if self.exists(parent, name):
             assertion(False)

@@ -30,7 +30,7 @@ for i, pt in files:
     np = 0
     pn = time.time()
     while True:
-        print("oi")
+#        print("oi")
         out = w.stderr.read(1)
 #        print(out)
 #        print(w.returncode)
