@@ -8,19 +8,20 @@ from yggdrasil.diskspec import *
 from yggdrasil import test
 from kvimpl import KVImpl
 
-
 class DFSRefinement(test.RefinementTest):
     def create_spec(self, mach):
         dirfn = FreshUFunction('dirfn', SizeSort, SizeSort, SizeSort)
         parentfn =  FreshUFunction('parentfn', SizeSort, SizeSort)
         modefn =  FreshUFunction('modefn', SizeSort, SizeSort)
         mtimefn =  FreshUFunction('mtimefn', SizeSort, SizeSort)
-        datafn = FreshUFunction('datafn', SizeSort, BlockSort)
+#        datafn = FreshUFunction('datafn', SizeSort, BlockSort)
+        datafn = FreshDiskArray('datafn')
         return DFSSpec(mach, dirfn, parentfn, modefn, mtimefn, datafn)
 
     def create_impl(self, mach):
         array = FreshDiskArray('disk')
         disk = AsyncDisk(mach, array)
+#        disk = SyncDisk(mach, array)
         return DFS(disk)
 
     def pre_post(self, spec, impl, **kwargs):       
@@ -33,6 +34,7 @@ class DFSRefinement(test.RefinementTest):
 
         # new
         ino = FreshBitVec('ino.pre', 64)
+        # TODO: remove this later if not being used:
         blkoff = FreshBitVec("boff.pre", BlockOffsetSort.size())
     
         
@@ -46,17 +48,13 @@ class DFSRefinement(test.RefinementTest):
 
             spec.lookup(parent, name) == impl.lookup(parent, name),
 
-            # verifying reads
-            ForAll([blkoff],
-                    spec.read(spec.lookup(parent, name))[blkoff] ==
-                       impl.read(impl.lookup(parent, name), blkoff))
         )))
 
-# An alternative way of verifying reads:
+        # verifying reads
 #        pre = And(pre, 
-#            ForAll([blkoff, ino],
-#                    spec.read(ino, blkoff) ==
-#                       impl.read(ino, blkoff)))
+#            ForAll(ino,
+#                   Implies(0 < ino,
+#                      spec.read(ino) == impl.read(ino))))
         
         pre = And(pre, 
                   ForAll([off], Implies(ZeroExt(64 - off.size(), off) < sb[1],
@@ -75,13 +73,21 @@ class DFSRefinement(test.RefinementTest):
                 )
         
         # uncomment the second one to verify writes
-        (spec, impl, (_, name0, _, _), (sino, iino)) = yield pre   
-        #(spec, impl, (_, name0, _, _, _, _), (_, _), (sino, iino)) = yield pre   
+        (spec, impl, (_, name0, _, _), (sino, iino)) = yield pre    # need more than 2 values to unpack
+#        (spec, impl, (_, name0, _, _), (_, _), (sino, iino)) = yield pre    # (dani) TODO VERY CONFUSED HERE; SEE NOTES
+
+# ((spec, impl, (_, name0, _, _),  (sino, iino)), (spec, simpl, (_, _), _)) = yield pre   # too many values to unpack
+#        (spec, impl, _, (_, name0, _, _, _, _),  (sino, iino, _)) = yield pre #need more than 4 values to unpack
+#        (spec, impl, (_, name0, _, _, _, _),  (sino, iino, _, _)) = yield pre # need more than 2 values to unpack
+#        (spec, impl, (_, name0, _, _, _, _),  (sino, iino)) = yield pre # need more than 2 values to unpack
+#        (spec, impl, (_, name0, _, _),  (sino, iino)) = yield pre # need more than 2 values to unpack
+        # (spec, impl, (_, name0, _, _), (_, _), (sino, iino)) = yield pre    # need more than 4 values to unpack (*same version as with the comment above..*)
+#        (spec, impl, (_, _), _)= yield pre   
 
 
         #print(self.show(pre))
         self.show(pre)
-
+        
         if iino < 0:
             iino = impl.lookup(parent, name0)
 
@@ -92,7 +98,7 @@ class DFSRefinement(test.RefinementTest):
         imap = impl._disk.read(sb[2])
 
         # remove later
-        blkoff1 = BitVecVal(1, BlockOffsetSort.size())
+       # blkoff1 = BitVecVal(1, BlockOffsetSort.size())
 
         post = ForAll([name], Implies(name != 0, And(
             Implies(0 < spec._dirfn(parent, name),
@@ -104,12 +110,13 @@ class DFSRefinement(test.RefinementTest):
 
             spec.lookup(parent, name) == impl.lookup(parent, name),
 
-            # verifying reads
-        #    Implies(0 < impl.lookup(parent, name),
-        #        ForAll([blkoff],
-        #            spec.read(spec.lookup(parent, name))[blkoff] ==
-        #                impl.read(impl.lookup(parent, name), blkoff)))
         )))
+
+        # verifying reads
+#        post = And(post, 
+#            ForAll(ino,
+#                   Implies(0 < ino,
+#                      spec.read(ino) == impl.read(ino))))
 
         post = And(post, 
                   ForAll([off], Implies(ZeroExt(64 - off.size(), off) < sb[1],
@@ -141,14 +148,16 @@ class DFSRefinement(test.RefinementTest):
         assertion(name != 0)
         yield (parent, name, mode, mtime)
 
-   # def match_write(self):
-   #     print("MATCHING WRITE")
+#    def match_write(self):
+#        print("MATCHING WRITE")
+#        ino = FreshBitVec('match-write-ino', 64)
+#        data = FreshBlock('match-write-data')
+#        yield (ino, data)
+##        ino = FreshBitVec('match-write-ino', 64)
+##       data = FreshBlock('match-write-data')
+##        ino = BitVecVal(10, 64)
+##        data = ConstBlock(0)
 
-#  #      ino = FreshBitVec('match-write-ino', 64)
-#  #     data = FreshBlock('match-write-data')
-   #     ino = BitVecVal(10, 64)
-   #     data = ConstBlock(0)
-   #     yield(ino, data)
 
 
 if __name__ == '__main__':

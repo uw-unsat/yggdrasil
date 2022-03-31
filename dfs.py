@@ -9,8 +9,8 @@ from kvimpl import KVImpl
 from yggdrasil.util import fresh_name, SizeSort
 from yggdrasil.ufarray import Block, StringElementSort #, FreshBlock
 
-class DFS(object):
 
+class DFS(object):
     def __init__(self, disk):
         self.server = Server(disk)
         self._disk = self.server._disk
@@ -78,10 +78,14 @@ class DFS(object):
         self._sb = None
         self._imap = None
 
-    def read(self, ino, off):
+    #def read(self, ino, off):
+    #    # TODO: write client interface for read
+    #    return self.server.read(ino, off) 
+    
+    def read(self, ino):
         # TODO: write client interface for read
-        return self.server.read(ino, off)
-
+        return self.server.read(ino) 
+    
     def write(self, ino, data):
         return self.server.s_write(ino, data)
 
@@ -154,7 +158,7 @@ class Server(object):
         self._imap = None
 
     def _begin(self):
-        # TODO: UNCOMMENT THE FOLLOWING
+        # TODO: uncomment
         #assert self._sb is None 
         #assert self._imap is None
 
@@ -210,7 +214,7 @@ class Server(object):
     def dir_lookup(self, blk, name):
         res = -errno.ENOENT
 
-        # In this impl, each dir has <= 2 files. If we change the range here to a larger number, verification still works, tho it takes longer (e.g. 50 files -> 47.5 min to verify single node LFS)
+        # (dani) In this impl, each dir has <= 2 files. If we change the range here to a larger number, verification still works, tho it takes longer (e.g. 50 files -> 47.5 min to verify single node LFS)
         for i in range(2):
             oname = blk[self.I_OFF_DATA + i * 2]
             oino = blk[self.I_OFF_DATA + i * 2 + 1]
@@ -228,7 +232,7 @@ class Server(object):
     def s_get_attr(self, ino):
         s = Stat(0, 0, 0)
 
-        # I think begin() and commit() are a way of ensuring atomicity
+        # begin() and commit() are a way of ensuring atomicity (acho)
         self._begin()
 
         blk_idx = self._get_map(ino)
@@ -275,14 +279,12 @@ class Server(object):
         self._begin()
 
         parent_blkno = self._get_map(parent)
-        # (dani) parent_blk is some kind of iterable
-        # i think it's a Block data type!
         parent_blk = self._disk.read(parent_blkno) 
 
         ino = self._ialloc()
         blkno = self._balloc()
 
-        # Finding "end of file"; i.e. where in the dir inode we can write the new file info :)
+        # Finding "end of directory"; i.e. where in the dir inode we can write the new file info :)
         eoff = self.dir_find_empty(parent_blk)
 
         if eoff < 0:
@@ -310,8 +312,7 @@ class Server(object):
 
         # NEW: Allocate block for file's contents (initially empty)
         datablkno = self._balloc()
-#        datablk = FreshBlock("file-data")
-        datablk = ConstBlock(0)
+        datablk = ConstBlock(0) # TODO: change this for something else???
         self._disk.write(datablkno, datablk)
         inodeblk[self.I_OFF_PTR] = datablkno
 
@@ -321,55 +322,43 @@ class Server(object):
 
     # Write a block to an existing file
     def s_write(self, ino, datablk):
-        #assertion(self.exists(ino)) # assertion or assert?
-        
+
         self._begin()
-        print("A WRITE!!!!!!!!!!!!!!")
-        
+        print("a write!!!!!!!!!!!!!")
+        if 0 > ino:
+            return BitVecVal(-errno.ENOENT, 64)
+    
         # get location of file's content block
         inodeblk = self._disk.read(ino)
         datablkptr = inodeblk[self.I_OFF_PTR]
             
         # write block
         self._disk.write(datablkptr, datablk)
-
         self._commit()
-        #return blkno
 
+    # TODO: cache reads
     # Read contents of a file the ino points to, if any
-    def read(self, ino, off):
-        print("start read")
+   # def read(self, ino, off):
+    def read(self, ino):
         self._begin()
-        
+        if 0 > ino:
+            #return BitVecVal(-errno.ENOENT, 64)
+            return ConstBlock(0)
+
         blkno = self._get_map(ino)
-        inoblk = self._disk.read(blkno)
-        
-      #  if 1 >= inoblk[self.I_OFF_PTR]:
-      #      print("ok..............")
-      #      return BitVecVal(1, 64)
-        
-      #  print("UNEXPECTED!!@@")
+        inoblk = self._disk.read(blkno)        
         data_addr = inoblk[self.I_OFF_PTR]
         assertion(data_addr >= 0)
         blk = self._disk.read(data_addr)
-        print("READ IS OF TYPE", type(blk))
-#        if isinstance(blk, Block):
-#            print("BANANANANANNANA")
-#        else:
-#            print("sobs.........")
-
-#        if (not isinstance(blk, Block)):
-#            blk = ConstBlock(0)
-           # blk = FreshBlock("read-dummy")
 
         self._commit(False)
-   #   print("r is",r._print(1)) 
-    #    print("r is obj ", r)
-        return blk[off]
+        
+#        return blk[off]
+        return blk
 
         # Idea: instead of always allocating a content block in mknod (a content block which may end up not being used, which is wasteful), we can find a way of keeping track of whether the file has been written to (for example, by the value stored in inode[self.I_OFF_PTR]), and, depending on that value, output a block that was read or a ConstBlock(0)
-        # for an example f this, see the read fn in "dirinode.py": res = If(And(is_mapped, ULT(blocknum, bsize)), res, ConstBlock(0))
-
+        # for an example of this, see the read fn in "dirinode.py": res = If(And(is_mapped, ULT(blocknum, bsize)), res, ConstBlock(0))
+        # another idea: since each file only has one data block so far, maybe we can just write the data in the inode itself?
 
 def mkfs(disk):
     sb = disk._disk.read(0)
@@ -432,3 +421,6 @@ if __name__ == '__main__':
 #for i in range(data):
 #            datablk[i] = data[i]
 #        self.server._imap = None
+
+# NOTE: right now this is not an ideal implementation. Server should be STATELESS, so clients should given the ino directly. Chnage this to make it a client call, where the client looks up. Actually, not sure, go check nfs documentation... TODO
+
