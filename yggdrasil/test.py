@@ -152,6 +152,7 @@ class DiskTest(unittest.TestCase):
                 print msg,
                 for v in vs:
                     print model.evaluate(v),
+                    #print model.evaluate(x, model_completion = True) (dani)
                 print ""
             print ""
 
@@ -163,8 +164,10 @@ class DiskTest(unittest.TestCase):
             print ""
             for msg, vs in disk.debug.debugs:
                 print msg,
-                for v in vs:
+                for v in vs: 
                     print model.evaluate(v),
+                    print("MODEL", model)
+                    #print model.evaluate(x, model_completion = True) (dani)
                 print ""
             print ""
 
@@ -175,6 +178,7 @@ class DiskTest(unittest.TestCase):
 #        print(model) # (dani) # uncomment to debug
 #       print("show")
         self.assertIsNotNone(model)
+
         return model
 
     def _solve(self, *args, **keywords):
@@ -208,7 +212,7 @@ class DiskTest(unittest.TestCase):
         else:
             r = s.check()
         if r == unsat:
-            return None
+            return None # The model returns "None" when the formula is unsatisfiable
         elif r == unknown:
             self.fail("Solver failed to solve")
         else:
@@ -385,6 +389,7 @@ class RefinementTest(DiskTest):
                         print msg,
                         for v in vs:
                             print model.evaluate(v),
+                            #print model.evaluate(x, model_completion = True) (dani)
                         print ""
                     print ""
 
@@ -474,6 +479,7 @@ class RefinementTest(DiskTest):
                         print msg,
                         for v in vs:
                             print model.evaluate(v),
+#                            print model.evaluate(x, model_completion = True) (dani)
                         print ""
                     print ""
 
