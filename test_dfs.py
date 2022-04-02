@@ -40,7 +40,9 @@ class DFSRefinement(test.RefinementTest):
         blkoff = FreshBitVec("boff.pre", BlockOffsetSort.size())
         blkoff1 = BitVecVal(1, BlockOffsetSort.size())    
         blkoff32 = BitVecVal(32, BlockOffsetSort.size())    
-        
+#        impl.read(parent)._print()
+#        print(type(impl.read(parent)))
+
         pre = ForAll([name], Implies(name != 0, And(
             Implies(0 < spec._dirfn(parent, name),
                     parent == spec._parentfn(spec._dirfn(parent, name))),
@@ -79,20 +81,21 @@ class DFSRefinement(test.RefinementTest):
                 1 < sb[1],
                 )
         
-        # uncomment the second one to verify writes
+        # uncomment the second one to verify writes; uncomment third one to verify ONLY writes
         (spec, impl, (_, name0, _, _), (sino, iino)) = yield pre   
         #(spec, impl, (_, name0, _, _, _, _), (_, _), (sino, iino)) = yield pre   
-
+        #(spec, impl, (_, _), (sino, iino)) = yield pre
 
         #print(self.show(pre))
         self.show(pre)
+
 
         if iino < 0:
             iino = impl.lookup(parent, name0)
 
         if self._solve(sino == iino):
             assertion(sino == iino)
-
+ 
         sb = impl._disk.read(0)
         imap = impl._disk.read(sb[2])
 
@@ -105,17 +108,10 @@ class DFSRefinement(test.RefinementTest):
                         spec.get_attr(spec.lookup(parent, name)) == impl.get_attr(impl.lookup(parent, name)))),
 
             spec.lookup(parent, name) == impl.lookup(parent, name),
-
-        #  can't even verify read equality for root inode...
-        #    spec.read(parent) == impl.read(parent)
         
-        #    Implies(0 < impl.lookup(parent, name),
-        #            spec.read(spec.lookup(parent, name)) == impl.read(impl.lookup(parent, name)))
-        ## verifying reads
-        #    Implies(0 < impl.lookup(parent, name),
-        #        ForAll([blkoff],
-        #            spec.read(spec.lookup(parent, name))[blkoff] ==
-        #                impl.read(impl.lookup(parent, name))[blkoff]))
+            Implies(0 < impl.lookup(parent, name),
+                    spec.read(spec.lookup(parent, name)) == impl.read(impl.lookup(parent, name)))
+
         )))
 
         post = And(post, 
@@ -148,14 +144,14 @@ class DFSRefinement(test.RefinementTest):
         assertion(name != 0)
         yield (parent, name, mode, mtime)
 
-   # def match_write(self):
-   #     print("MATCHING WRITE")
+  #  def match_write(self):
+  #      print("MATCHING WRITE")
 
-#  #      ino = FreshBitVec('match-write-ino', 64)
-#  #     data = FreshBlock('match-write-data')
-   #     ino = BitVecVal(10, 64)
-   #     data = ConstBlock(0)
-   #     yield(ino, data)
+# #       ino = FreshBitVec('match-write-ino', 64)
+# #      data = FreshBlock('match-write-data')
+  #      ino = BitVecVal(10, 64)
+  #      data = ConstBlock(0)
+  #      yield(ino, data)
 
 
 if __name__ == '__main__':
@@ -170,4 +166,44 @@ if __name__ == '__main__':
      #  for r in rd:
             #print("r is", r)
       #      print("t rype is", r)
+
+#        print("IMPL IINO READ", impl.read(iino))   
+#        print("IMPL IINO READ TYPE", type(impl.read(iino)))
+#        print("SPEC IINO  READ", spec.read(iino))   
+#        print("SPEC IINO READ TYPE", type(spec.read(iino)))
+#        print("IMPL PARENT READ", impl.read(parent))
+#        print("IMPL PARENT READ TYPE", type(impl.read(parent)))
+#        print("SPEC PARENT READ", impl.read(parent))
+#        print("SPEC PARENT READ TYPE", type(impl.read(parent)))
+            
+            # this works too (for post), but is a smaller guarantee (I think)
+#            Implies(0 < iino,
+#                impl.read(iino) == spec.read(sino))
+           
+
+            # this works too (but only verifies parent)
+           # Implies(0 < parent,
+           #     impl.read(parent) == spec.read(parent))
+
+           # Implies(
+           #     0 < ino, # this fails
+           #     impl.read(ino) == spec.read(ino))
+
+        #  can't even verify read equality for root inode...
+#        spec.read(parent) == impl.read(parent)
+            #   impl.read(parent) == impl.read(parent), # this is giving errors again, even though earlier (see below) it wasn't. OK nevermind I fixed it :) I was forgetting to return r in s_read...
+#        spec.read(parent) == spec.read(parent) # this works fine
+            
+#        spec.read(BitVecVal(32, 64)) == impl.read(BitVecVal(32, 64))
+ #       spec.read(BitVecVal(32, 64)) == spec.read(BitVecVal(32, 64)),#this works
+     #   impl.read(BitVecVal(32, 64)) == impl.read(BitVecVal(32, 64)) #okkk now this works! (once we stop assigning a content block each time we mknod)
+        
+
+        #    Implies(0 < impl.lookup(parent, name),
+        #            spec.read(spec.lookup(parent, name)) == impl.read(impl.lookup(parent, name)))
+        ## verifying reads
+        #    Implies(0 < impl.lookup(parent, name),
+        #        ForAll([blkoff],
+        #            spec.read(spec.lookup(parent, name))[blkoff] ==
+        #                impl.read(impl.lookup(parent, name))[blkoff]))
 

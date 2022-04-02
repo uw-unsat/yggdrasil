@@ -219,7 +219,6 @@ class Server(object):
         for i in range(2):
             oname = blk[self.I_OFF_DATA + i * 2]
             oino = blk[self.I_OFF_DATA + i * 2 + 1]
-
             res = If(And(oname == name, 0 < oino), oino, res)
         return res
 
@@ -272,7 +271,7 @@ class Server(object):
 
     def s_mknod(self, parent, name, mode, mtime):
 
-        # check if the file exists 
+        # check if the file already exists 
         if self.exists(parent, name):
             assertion(False)
             return BitVecVal(-errno.EEXIST, 64)
@@ -280,8 +279,6 @@ class Server(object):
         self._begin()
 
         parent_blkno = self._get_map(parent)
-        # (dani) parent_blk is some kind of iterable
-        # i think it's a Block data type!
         parent_blk = self._disk.read(parent_blkno) 
 
         ino = self._ialloc()
@@ -295,8 +292,7 @@ class Server(object):
             return eoff
 
         # write new inode
-        inodeblk = ConstBlock(0) 
-        
+        inodeblk = ConstBlock(0)         
         inodeblk[self.I_OFF_MTIME] = mtime
         inodeblk[self.I_OFF_MODE] = mode
         self._disk.write(blkno, inodeblk) 
@@ -314,11 +310,11 @@ class Server(object):
         self._set_map(parent, new_parent_blkno)
 
         # NEW: Allocate block for file's contents (initially empty)
-        datablkno = self._balloc()
-#        datablk = FreshBlock("file-data")
-        datablk = ConstBlock(0)
-        self._disk.write(datablkno, datablk)
-        inodeblk[self.I_OFF_PTR] = datablkno
+#        datablkno = self._balloc()
+#        datablk = ConstBlock(0)
+#        self._disk.write(datablkno, datablk)
+#        inodeblk[self.I_OFF_PTR] = datablkno
+        self._empty.__setitem__(ino, True) #NEW
 
         self._commit()
 
@@ -330,13 +326,18 @@ class Server(object):
         
         self._begin()
         print("A WRITE!!!!!!!!!!!!!!")
-        
-        # get location of file's content block
+       
         inodeblk = self._disk.read(ino)
-        datablkptr = inodeblk[self.I_OFF_PTR]
+        
+        if self._isempty(ino):
+            # assign a content block
+            datablkno = self._balloc()
+        else:
+             # get location of file's content block
+            datablkno = inodeblk[self.I_OFF_PTR]
             
         # write block and mark inode as not empty
-        self._disk.write(datablkptr, datablk)
+        self._disk.write(datablkno, datablk)
         self._empty.__setitem__(ino, False)
 
         self._commit()
@@ -355,17 +356,17 @@ class Server(object):
         # If nothing has been written to this file, return an empty Block
         if self._empty.get(ino, True):
             return ConstBlock(0)
-
-        blkno = self._get_map(ino)
-        inoblk = self._disk.read(blkno)
+        else:
+            blkno = self._get_map(ino)
+            inoblk = self._disk.read(blkno)
+            
+            data_addr = inoblk[self.I_OFF_PTR]
+            assertion(data_addr >= 0)
+            blk = self._disk.read(data_addr)
+            #print("READ IS OF TYPE", type(blk))
         
-        data_addr = inoblk[self.I_OFF_PTR]
-        assertion(data_addr >= 0)
-        blk = self._disk.read(data_addr)
-        print("READ IS OF TYPE", type(blk))
-
-        self._commit(False)
-#        return blk
+            self._commit(False)
+            return blk
 
         # Idea: instead of always allocating a content block in mknod (a content block which may end up not being used, which is wasteful), we can find a way of keeping track of whether the file has been written to (for example, by the value stored in inode[self.I_OFF_PTR]), and, depending on that value, output a block that was read or a ConstBlock(0)
         # for an example f this, see the read fn in "dirinode.py": res = If(And(is_mapped, ULT(blocknum, bsize)), res, ConstBlock(0))

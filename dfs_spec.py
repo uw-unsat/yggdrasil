@@ -12,6 +12,11 @@ class DFSSpec():
         self._parentfn = parentfn
         self._datafn = datafn
         self._emptyfn = emptyfn
+        # TODO: MAYBE COUNT NUMBER OF CHILDREN; SO WE CAN LIMIT MKNOD LIKE WE LIMIT IT IN THE IMPL?
+
+        self._emptyfn = self._emptyfn.update(BitVecVal(0, 64), BoolVal(True))
+        self._emptyfn = self._emptyfn.update(BitVecVal(1, 64), BoolVal(True))
+        self._emptyfn = self._emptyfn.update(BitVecVal(2, 64), BoolVal(True))
 
     # In the implementation, lookup results can be cached (this should not affect consistentcy since we do not delete files)
     def lookup(self, parent, name):
@@ -37,6 +42,7 @@ class DFSSpec():
         self._modefn = self._modefn.update(ino, mode, guard=on)
         self._mtimefn = self._mtimefn.update(ino, mtime, guard=on)
         self._parentfn = self._parentfn.update(ino, parent, guard=on)
+        self._emptyfn = self._emptyfn.update(ino, BoolVal(True))
 
         return ino
 
@@ -49,7 +55,7 @@ class DFSSpec():
         return self._emptyfn(ino)
 
     # TODO: write and read
-    def write(self, ino, data): 
+    def write(self, ino, datablk): 
         #data = Extract(511, 0, data)
         if 0 < ino:
             self._datafn = self._datafn.update(ino, datablk) #, guard=on)
