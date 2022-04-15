@@ -21,27 +21,18 @@ class DFS(object):
         self.c2 = Client(self.server)
 
     def lookup(self, parent, name):
-        # TODO: define a better lookup (union?). Or maybe keep this as is, and change the way we do the verification?
         self._begin()
         client = random.choice([self.c1, self.c2])
-        # debugging
-        #pt = "client is 1!" if client == self.c1 else "client is 2!"; print(pt)
         res = client.c_lookup(parent, name)
         self._commit(False)
         return res
 
     def get_attr(self, ino):
         client = random.choice([self.c1, self.c2])
-        # debugging
-        #pt = "client is 1!" if client == self.c1 else "client is 2!"; print(pt)
-
         return client.c_get_attr(ino)
 
     def mknod(self, parent, name, mode, mtime):
         client = random.choice([self.c1, self.c2])
-        # debugging
-        #pt = "client is 1!" if client == self.c1 else "client is 2!"; print(pt)
-        
         return client.c_mknod(parent, name, mode, mtime)
 
     def crash(self, mach):
@@ -55,7 +46,7 @@ class DFS(object):
         self._imap = self._disk.read(self._sb[self.server.SB_OFF_IMAP])
 
     def _balloc(self):
-        #(dani) get index of next available block 
+        # get index of next available block 
         a = self._sb[self.server.SB_OFF_BALLOC]
         self._sb[self.server.SB_OFF_BALLOC] += 1
 
@@ -78,33 +69,26 @@ class DFS(object):
         self._sb = None
         self._imap = None
 
-#    def read(self, ino, off):
-#        # TODO: write client interface for read
-#        return self.server.read(ino, off)
-
     def read(self, ino):
-        # TODO: write client interface for read
-        return self.server.read(ino)
+        client = random.choice([self.c1, self.c2])
+        return client.c_read(ino)
     
     def write(self, ino, data):
-        return self.server.s_write(ino, data)
-
+        client = random.choice([self.c1, self.c2])
+        return client.c_write(ino, data)
+   
 class Client(object):
     
     def __init__(self, server):
         self.server = server
         self._disk = self.server._disk 
-        
-        # TODO: store more info in cache
         self._cache = Dict()
 
     def _set_cache(self, key, val):
         self._cache[key] = val
-        #return val
    
     def c_lookup(self, parent, name):
-       # print("looking up name", name, "of parent", parent)
-        ino_opt = self._cache.get((parent, name), BitVecVal(-1, 64)) # ok
+        ino_opt = self._cache.get((parent, name), BitVecVal(-1, 64))
 
 #        Tests: if either of these hold, then the If statement below always chooses one path, which should not happen!
 #        assertion(UGT(ino_opt, BitVecVal(0, 64)))
@@ -132,9 +116,11 @@ class Client(object):
         stat.mtime = mtime
         return self.c_set_attr(ino, stat)
 
-    def c_write(self, ino, mtime, data):
-        pass
+    def c_write(self, ino, data):
+        return self.server.s_write(ino, data) 
 
+    def c_read(self, ino):
+        return self.server.s_read(ino)
 
 class Server(object):
     SUPERBLOCK = 0
@@ -147,7 +133,6 @@ class Server(object):
     I_OFF_MODE = 1
     I_OFF_DATA = 4
 
-    # new
     # this will allow each dir to have up to 20 files (later: distinguish between file/dir)
     I_OFF_PTR = 24 
 
@@ -160,15 +145,15 @@ class Server(object):
 
     def _begin(self):
         # TODO: UNCOMMENT THE FOLLOWING
-        #assert self._sb is None 
-        #assert self._imap is None
+        # assert self._sb is None 
+        # assert self._imap is None
 
         self._sb = self._disk.read(self.SUPERBLOCK)
         self._imap = self._disk.read(self._sb[self.SB_OFF_IMAP])
 
     def _balloc(self):
 
-        #(dani) get index of next available block 
+        # get index of next available block 
         a = self._sb[self.SB_OFF_BALLOC]
         self._sb[self.SB_OFF_BALLOC] += 1
 
@@ -178,12 +163,12 @@ class Server(object):
 
     def _ialloc(self):
 
-        #(dani) get index next available inode
+        # get index next available inode
         a = self._sb[self.SB_OFF_IALLOC]
         self._sb[self.SB_OFF_IALLOC] += 1
 
         # we have a free inode...
-        #(dani) Note: limited to 512 files (512 entries in the inode mapping block).
+        # Note: limited to 512 files (512 entries in the inode mapping block).
         assertion(a < 512)
         return a
 
@@ -202,27 +187,28 @@ class Server(object):
         self._sb = None
         self._imap = None
 
-    #(dani) update the inode mapping with the relation (ino -> bid)
+    # update the inode mapping with the relation (ino -> bid)
     def _set_map(self, ino, bid):
         self._imap[Extract(8, 0, ino)] = bid
 
-    #(dani) Get the block index of inode number ino
+    # get the block index of inode number ino
     def _get_map(self, ino):
         return self._imap[Extract(8, 0, ino)]
 
     ########
-    #(dani) Given a directory block number and the name of a file within that directory, return the ino of that file
+    # given a directory block number and the name of a file within that directory, return the ino of that file
     def dir_lookup(self, blk, name):
         res = -errno.ENOENT
 
-        # In this impl, each dir has <= 2 files. If we change the range here to a larger number, verification still works, tho it takes longer (e.g. 50 files -> 47.5 min to verify single node LFS)
+        # In this implementation, each dir has <= 2 files. 
+        # If we increase this limit, verification still works, though it takes longer (e.g. 50 files -> 47.5 min to verify single node LFS)
         for i in range(2):
             oname = blk[self.I_OFF_DATA + i * 2]
             oino = blk[self.I_OFF_DATA + i * 2 + 1]
             res = If(And(oname == name, 0 < oino), oino, res)
         return res
 
-    #(dani) Find empty slot in directory
+    # Find empty slot in directory
     def dir_find_empty(self, blk):
         res = BitVecVal(-errno.ENOSPC, 64)
         for i in range(2):
@@ -232,7 +218,6 @@ class Server(object):
     def s_get_attr(self, ino):
         s = Stat(0, 0, 0)
 
-        # I think begin() and commit() are a way of ensuring atomicity
         self._begin()
 
         blk_idx = self._get_map(ino)
@@ -269,6 +254,9 @@ class Server(object):
     def exists(self, parent, name):
         return 0 < self.s_lookup(parent, name)
 
+    def is_empty(self, ino):
+        return self._empty.get(ino, True)
+
     def s_mknod(self, parent, name, mode, mtime):
 
         # check if the file already exists 
@@ -284,7 +272,7 @@ class Server(object):
         ino = self._ialloc()
         blkno = self._balloc()
 
-        # Finding "end of file"; i.e. where in the dir inode we can write the new file info :)
+        # finding "end of file"; i.e. where in the dir inode we can write the new file info :)
         eoff = self.dir_find_empty(parent_blk)
 
         if eoff < 0:
@@ -309,27 +297,22 @@ class Server(object):
         self._set_map(ino, blkno)
         self._set_map(parent, new_parent_blkno)
 
-        # NEW: Allocate block for file's contents (initially empty)
-#        datablkno = self._balloc()
-#        datablk = ConstBlock(0)
-#        self._disk.write(datablkno, datablk)
-#        inodeblk[self.I_OFF_PTR] = datablkno
-        self._empty.__setitem__(ino, True) #NEW
+        # file is initially empty
+        self._empty.__setitem__(ino, True) 
 
         self._commit()
 
         return ino
 
-    # Write a block to an existing file
     def s_write(self, ino, datablk):
-        #assertion(self.exists(ino)) # assertion or assert?
         
         self._begin()
-        print("A WRITE!!!!!!!!!!!!!!")
+        assertion(ino > 0)
+        print("start write")
        
         inodeblk = self._disk.read(ino)
         
-        if self._isempty(ino):
+        if self.is_empty(ino):
             # assign a content block
             datablkno = self._balloc()
         else:
@@ -341,18 +324,14 @@ class Server(object):
         self._empty.__setitem__(ino, False)
 
         self._commit()
-        #return blkno
+        return ino
 
     # Read contents of a file the ino points to, if any
-    #def read(self, ino, off):
-    def read(self, ino):
+    def s_read(self, ino):
 
-#        return self._disk.read(ino)
         print("start read")
         self._begin()
-        #  if 0 > ino:        # TODO: somehow these two lines cause the verif to fail... weird right?
-      #      return ConstBlock(0)
-
+        
         # If nothing has been written to this file, return an empty Block
         if self._empty.get(ino, True):
             return ConstBlock(0)
@@ -363,26 +342,21 @@ class Server(object):
             data_addr = inoblk[self.I_OFF_PTR]
             assertion(data_addr >= 0)
             blk = self._disk.read(data_addr)
-            #print("READ IS OF TYPE", type(blk))
         
             self._commit(False)
             return blk
 
-        # Idea: instead of always allocating a content block in mknod (a content block which may end up not being used, which is wasteful), we can find a way of keeping track of whether the file has been written to (for example, by the value stored in inode[self.I_OFF_PTR]), and, depending on that value, output a block that was read or a ConstBlock(0)
-        # for an example f this, see the read fn in "dirinode.py": res = If(And(is_mapped, ULT(blocknum, bsize)), res, ConstBlock(0))
-
-
 def mkfs(disk):
     sb = disk._disk.read(0)
     if sb[0] == 0:
-        sb[DFS.SB_OFF_BALLOC] = 3
+        sb[DFS.SB_OFF_BALLOC] = 3 
         sb[DFS.SB_OFF_IALLOC] = 2
         sb[DFS.SB_OFF_IMAP] = 1
         disk._disk.write(0, sb)
 
         imap = ConstBlock(0)
         imap[1] = 2
-        disk._disk.write(1, imap)
+        disk._disk.write(DFS.SB_OFF_IMAP, imap) # off_imap = 1
 
 def create_dfs(*args):
     disk = AsyncDisk('/tmp/foo.img')
@@ -404,32 +378,3 @@ if __name__ == '__main__':
 # NOTE ON WRITE: The inode update is not done in the usual log-structured way. In a typical LFS, we would create a new inode with the new information and then create a new inode mapping with the new, updated information. Here, the inode block and inode mapping block remain the same, and we simply write to them. This can be changed later. Also, it seems that the LFS implementation by the yggdrasil team also does not write a new inode mapping when updating the mapping (check).
 
 # Note on s_lookup: even though the dfs lookup in wrapped in a transaction, s_lookup (which is called by dfs' lookup) also has to be in a transaction or else verification fails! Isn't this odd. I thought transactions would recursrively apply to called functions
-
-# Sketches: 
-# transaction for clients:
-#    def _begin(self):
-#        assert self.server._sb is None 
-#        assert self.server._imap is None
-#
-#        self._sb = self._disk.read(self.server.SUPERBLOCK)
-#        self._imap = self._disk.read(self.server._sb[self.server.SB_OFF_IMAP])
-#
-#    def _commit(self, write=True):
-#        assert self._sb is not None
-#        assert self._imap is not None
-#
-#        if write:
-#            a = self._balloc()
-#            self._disk.write(a, self._imap)
-#            self._disk.flush()
-#            self._sb[self.server.SB_OFF_IMAP] = a
-#            self._disk.write(self.server.SUPERBLOCK, self.server._sb)
-#            self._disk.flush()
-#        
-#        self.server._sb = None
-        
-# OLD WRITE
-# write data
-#for i in range(data):
-#            datablk[i] = data[i]
-#        self.server._imap = None

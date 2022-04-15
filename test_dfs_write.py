@@ -7,6 +7,9 @@ from yggdrasil.diskspec import *
 from yggdrasil import test
 from kvimpl import KVImpl
 
+InoSort = BitVecSort(64)
+def FreshIno(name):
+    return FreshBitVec(name, InoSort.size())
 
 class DFSRefinement(test.RefinementTest):
     def create_spec(self, mach):
@@ -31,6 +34,9 @@ class DFSRefinement(test.RefinementTest):
         imap = impl._disk.read(sb[2])
         off = FreshBitVec("off", 9)
         
+        ino = FreshBitVec('ino.pre', 64)
+        blkoff = FreshBitVec("boff.pre", BlockOffsetSort.size())
+
         pre = ForAll([name], Implies(name != 0, And(
             Implies(0 < spec._dirfn(parent, name),
                     parent == spec._parentfn(spec._dirfn(parent, name))),
@@ -40,11 +46,6 @@ class DFSRefinement(test.RefinementTest):
                         spec.get_attr(spec.lookup(parent, name)) == impl.get_attr(impl.lookup(parent, name)))),
 
             spec.lookup(parent, name) == impl.lookup(parent, name),
-            
-            
-            Implies(0 < impl.lookup(parent, name),
-                    spec.read(spec.lookup(parent, name)) == impl.read(impl.lookup(parent, name))),
-
         )))
 
         
@@ -64,16 +65,10 @@ class DFSRefinement(test.RefinementTest):
                 1 < sb[1],
                 )
         
-        (spec, impl, (_, name0, _, _), (sino, iino)) = yield pre   
+        (spec, impl, (ino1, data), (sino, iino)) = yield pre
 
         self.show(pre)
 
-        if iino < 0:
-            iino = impl.lookup(parent, name0)
-
-        if self._solve(sino == iino):
-            assertion(sino == iino)
- 
         sb = impl._disk.read(0)
         imap = impl._disk.read(sb[2])
 
@@ -86,10 +81,12 @@ class DFSRefinement(test.RefinementTest):
                         spec.get_attr(spec.lookup(parent, name)) == impl.get_attr(impl.lookup(parent, name)))),
 
             spec.lookup(parent, name) == impl.lookup(parent, name),
-        
-            Implies(0 < impl.lookup(parent, name),
-                    spec.read(spec.lookup(parent, name)) == impl.read(impl.lookup(parent, name)))
-
+         
+            # uncomment to verify reads:
+             #   ForAll([ino],      
+             #      Implies(And(0 < ino, Not(impl.server.is_empty(ino))),
+             #       impl.read(ino) == spec.read(ino)))
+      
         )))
 
         post = And(post, 
@@ -112,15 +109,16 @@ class DFSRefinement(test.RefinementTest):
 
         yield post
 
-    def match_mknod(self):
-        print("MATCHING MKNOD")
-        
-        parent = BitVecVal(1, 64)
-        name = FreshBitVec('name', 64)
-        mode = FreshBitVec('mode', 64)
-        mtime = FreshBitVec('mtime', 64)
-        assertion(name != 0)
-        yield (parent, name, mode, mtime)
+
+    def match_write(self):
+        print("MATCHING WRITE")
+
+        ino = FreshIno('match-write-ino')
+        data = FreshBlock('match-write-data')
+        assertion(ino > 0)
+        yield(ino, data)
+
 
 if __name__ == '__main__':
     test.main()
+

@@ -15,7 +15,8 @@ files = [
 #   To verify YminLFS, uncomment the line below
 #    ("test_lfs_og.py", "Verifying log file system")
 
-     ("test_dfs.py", "Verifying dfs")
+     ("test_dfs.py", "mknod operation"),
+     ("test_dfs_write.py", "write operation")
 ]
 
 n = time.time()
